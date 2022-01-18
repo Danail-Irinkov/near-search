@@ -19,13 +19,14 @@
 				Random Contract
 			</a>
 		</div>
-		<div class="searchResult" v-show="isResult" transition="expand">
-			<a @click="parseContract(contract)" v-for="contract in searchResult">
+		<div class="contracts" v-show="isResult" transition="expand">
+			<div class="link"
+				@click="parseContract(contract)"
+				 v-for="contract in contracts">
 				<div class="medium-8 medium-offset-2 columns card">
-					<h1 class="text-headline">{{ contract.title }}</h1>
-					<p class="text-body-1">{{ contract.extract }}</p>
+					<h3 class="text-headline">{{ contract.account_id }} - {{ contract.hits }}</h3>
 				</div>
-			</a>
+			</div>
 		</div>
 	</div>
 </template>
@@ -42,7 +43,7 @@ export default {
 	},
 	data() {
 		return {
-			searchResult: null,
+			contracts: [],
 			isResult: false,
 			searchQuery: '',
 			network: 'mainnet',
@@ -52,21 +53,17 @@ export default {
 	
 	},
 	filters: {
-		// htmlEscape(){
-		// 	return value.replace(/\&amp\;/g, '&');
-		// },
-		// dateTime(){
-		// 	return new Date(val).toGMTString().slice(0, -13);
-		// },
 	},
 	methods: {
 		async submitSearch() {
 			try {
+				console.log('submitSearch Start')
 				console.time('queryPool')
-				let res = await this.axios.post('https://us-central1-near-search-3807d.cloudfunctions.net/queryIndexer', { query: 'adsads asdasd'})
+				let res = await this.axios.post('https://us-central1-near-search-3807d.cloudfunctions.net/queryIndexer', { query: this.searchQuery })
 				console.timeEnd('queryPool')
 				console.log('queryPool res', res)
-				this.searchResult = res
+				this.contracts = [...res.data.contracts]
+				this.isResult = this.contracts && this.contracts.length;
 				return res
 			} catch (e) {
 				console.timeEnd('queryPool')
@@ -80,7 +77,7 @@ export default {
 		},
 		getRandom: function() {},
 		parseContract(contract_id){
-		
+			console.log('parseContract Start')
 		},
 	}
 }
