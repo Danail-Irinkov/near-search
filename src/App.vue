@@ -32,6 +32,10 @@ export default defineComponent({
 	@apply no-underline hover:underline cursor-pointer
 }
 
+.row {
+	@apply grid col-span-12 grid-cols-12
+}
+
 #nav {
   padding: 30px;
 }

@@ -10,12 +10,12 @@ export const queryIndexer = functions.https.onRequest((req, res) => {
 			fl.log("queryIndexer input", req.body);
 
 			let words = String(req.body.query).split(' ')[0]
-			let block_height_max = calcNEARBlockHeight() - 2000000 // ~35 days ago
-			let block_timestamp_max = new Date().getTime() * 1000
+			let block_height_min = calcNEARBlockHeight() - 2000000 // ~25 days ago
+			let block_timestamp_min = new Date().getTime() * 1000
 
-			fl.log("queryIndexer words", words);
-			// fl.error("queryIndexer block_height_max", block_height_max);
-			// fl.error("queryIndexer block_timestamp_max", block_timestamp_max);
+			console.log("queryIndexer words", words);
+			fl.error("queryIndexer block_height_min", block_height_min);
+			fl.error("queryIndexer block_timestamp_min", block_timestamp_min);
 
 			let query = `
           SELECT account_id, hits
@@ -26,7 +26,8 @@ export const queryIndexer = functions.https.onRequest((req, res) => {
                 FROM (
                      SELECT transaction_hash
                      FROM transactions
-                     WHERE block_timestamp > ${block_timestamp_max} and transactions.receiver_account_id = account_id
+                     WHERE block_timestamp > ${block_timestamp_min} 
+                       AND transactions.receiver_account_id = account_id
                    ) AS transactions
 								LEFT JOIN transaction_actions
 								ON transactions.transaction_hash = transaction_actions.transaction_hash
@@ -35,13 +36,13 @@ export const queryIndexer = functions.https.onRequest((req, res) => {
            FROM (
 						    SELECT account_id
 						    FROM ACCOUNTS
-						    WHERE last_update_block_height > ${block_height_max} 
+						    WHERE last_update_block_height > ${block_height_min} 
 						      AND account_id LIKE '${words.length < 4 ? '' : '%'}${words}${words.length < 3 ? '' : '%'}'
 						) AS accounts
        ) AS contracts
         WHERE hits > 0
         ORDER BY hits DESC
-        LIMIT 10
+        LIMIT 50
 			`
 
 			// fl.log("queryIndexer query", query);

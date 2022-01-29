@@ -1,39 +1,60 @@
 <template>
-	<div class="row column header" id="wikiApp">
+	<div class="header" id="wikiApp">
 		<Head>
 			<title>NEAR Search</title>
 			<meta name="description" content="Search the NEAR Network for Contracts and review their methods" />
 		</Head>
-		<h1 class="cover-heading">NEAR Search <i class="fa fa-search"></i></h1>
+		<h1 class="cover-heading">NEAR Search</h1>
 		<div class="medium-6 medium-offset-3 ctrl">
 			<form class="searchForm" @submit.prevent="submitSearch">
-				<input type="text" v-model="searchQuery" placeholder="Type here and press enter">
-				<span v-show="searchQuery" class="removeInput" @click="removeSearchQuery">+</span>
+				<input type="text" v-model="searchQuery" placeholder="Search NEAR Contracts">
+				<span v-show="searchQuery" class="remove-btn"
+							@click="removeSearchQuery">
+					<fa-icon icon="times"/>
+				</span>
+				<span class="search-btn" @click="submitSearch">
+					<fa-icon v-if="isSearching" icon="spinner" class="fa-spin"/>
+					<fa-icon v-else icon="search"/>
+				</span>
 			</form>
-			<a class="raised-button ink" @click="submitSearch">
-				<i class="fa fa-search"></i>
-				Search
-			</a>
-			<a class="raised-button ink" @click="getRandom" target="_blank">
-				<i class="fa fa-random"></i>
-				Random Contract
-			</a>
 		</div>
-		<div class="contracts" v-show="isResult" transition="expand">
-			<div class="link"
-				@click="parseContract(contract)"
-				 v-for="contract in contracts">
-				<div class="medium-8 medium-offset-2 columns card">
-					<h3 class="text-headline">{{ contract.account_id }} - {{ contract.hits }}</h3>
+		<transition mode="out-in" name="expand">
+			<div class="contracts" v-show="isResult">
+				<div class="row">
+					<div class="col-span-9 mb-2">
+						<h3 class="text-headline text-left"></h3>
+					</div>
+					<div class="col-span-3 mb-2">
+						<h4 class="text-headline text-center italic">Usage</h4>
+					</div>
+					<div class="row"
+						 v-for="contract in contracts">
+						<div class="col-span-9 link"
+								 @click="fetchContract(contract)">
+							<h3 class="text-headline text-left">{{ contract.account_id }}</h3>
+						</div>
+						<div class="col-span-3">
+							<h3 class="text-headline text-center">{{ contract.hits }}</h3>
+						</div>
+						<transition mode="out-in" name="expand">
+							<div v-if="contract.methods && contract.show_methods" class="col-span-12">
+								<div v-for="method in contract.methods">
+									<h4 class="text-headline text-left">{{ method }}</h4>
+								</div>
+							</div>
+						</transition>
+					</div>
 				</div>
 			</div>
-		</div>
+		</transition>
 	</div>
 </template>
 
 <script>
 import { Head } from '@egoist/vue-head'
-import { parseContract } from 'near-contract-parser'
+import * as nearAPI from 'near-api-js'
+import near_config from '../components/near_config'
+import {parseContract} from 'near-contract-parser'
 
 export default {
 	el: '#near_search',
@@ -44,10 +65,20 @@ export default {
 	data() {
 		return {
 			contracts: [],
+			isSearching: false,
 			isResult: false,
 			searchQuery: '',
 			network: 'mainnet',
+			near: {},
 		}
+	},
+	async mounted() {
+		console.log('mounted Start 2', window.API_URL)
+		let options = near_config('mainnet')
+		
+		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
+		
+		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
 	},
 	computed: {
 	
@@ -57,15 +88,18 @@ export default {
 	methods: {
 		async submitSearch() {
 			try {
-				console.log('submitSearch Start')
+				// console.log('submitSearch Start', API_URL) // Also works
 				console.time('queryPool')
-				let res = await this.axios.post('https://us-central1-near-search-3807d.cloudfunctions.net/queryIndexer', { query: this.searchQuery })
+				this.isSearching = true;
+				let res = await this.axios.post(window.API_URL+'/queryIndexer', { query: this.searchQuery })
 				console.timeEnd('queryPool')
 				console.log('queryPool res', res)
 				this.contracts = [...res.data.contracts]
-				this.isResult = this.contracts && this.contracts.length;
+				this.isSearching = false
+				this.isResult = this.contracts && this.contracts.length
 				return res
 			} catch (e) {
+				this.isSearching = false
 				console.timeEnd('queryPool')
 				console.error('queryPool err', e)
 				return Promise.reject(e)
@@ -75,9 +109,27 @@ export default {
 			this.searchQuery = '';
 			this.isResult = false;
 		},
-		getRandom: function() {},
-		parseContract(contract_id){
-			console.log('parseContract Start')
+		async fetchContract(contract){
+			try {
+				console.log('fetchContract Start')
+				let parsed_contract
+				if (!contract.methods) {
+					const { code_base64 } = await this.near.connection.provider.query({
+						account_id: contract.account_id,
+						finality: 'final',
+						request_type: 'view_code',
+					});
+					console.log('fetchContract Start 2')
+					parsed_contract = await parseContract(code_base64)
+					console.log('fetchContract parsed_contract', parsed_contract)
+					contract.methods = parsed_contract.methodNames
+				}
+				contract.show_methods = !contract.show_methods
+				return parsed_contract
+			} catch (e) {
+				console.error('fetchContract Error: ', e)
+				return Promise.reject(e)
+			}
 		},
 	}
 }
@@ -98,20 +150,6 @@ html {
 }
 a {
 	color: #333;
-}
-
-.card {
-	text-align: left;
-	border-radius: 0;
-	background: val($c-white);
-	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13), 0 1px 5px 0 rgba(0, 0, 0, 0.08);
-	padding: 0 1.6rem;
-	margin-bottom: 0.8rem;
-}
-
-.card:hover {
-	color: val($c-near);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.13), 0 3px 5px 0 rgba(0, 0, 0, 0.08);
 }
 
 .ctrl {
@@ -138,15 +176,22 @@ h2 {
 	margin-top: 1.6rem;
 	margin-bottom: 1.6rem;
 }
-.removeInput {
-	font-size: 36px;
+.remove-btn {
+	font-size: 26px;
+	color: val($c-warning);
+	cursor: pointer;
+	top: 0;
+	right: 36px;
+	position: absolute;
+}
+.search-btn {
+	font-size: 26px;
 	color: val($c-warning);
 	cursor: pointer;
 	top: 0;
 	right: 0;
 	position: absolute;
-	-webkit-transform: rotate(45deg);
-	transform: rotate(45deg);
+	transform: rotate(70deg);
 }
 .searchForm {
 	margin-bottom: 2.6rem;
@@ -164,13 +209,14 @@ h2 {
 .text-headline {
 	font-size: 24px;
 	line-height: 32px;
-	padding-top: 16px;
-	margin-bottom: 12px;
+	//padding-top: 16px;
+	//margin-bottom: 12px;
 	letter-spacing: 0;
 }
 
 /* vuejs transition */
 .expand-transition {
+	transition-duration: 0.5s;
 	transition: all .5s ease;
 	padding: 10px;
 	min-height: 1500px;
