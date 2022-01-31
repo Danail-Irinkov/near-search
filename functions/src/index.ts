@@ -8,12 +8,13 @@ export const queryIndexer = functions.https.onRequest((req, res) => {
 	cors(req, res, async () => {
 		try {
 			fl.log("queryIndexer input", req.body);
-
 			let words = String(req.body.query).split(' ')[0]
-			let block_height_min = calcNEARBlockHeight() - 2000000 // ~25 days ago
-			let block_timestamp_min = new Date().getTime() * 1000
 
-			console.log("queryIndexer words", words);
+			let query_time = 20 * 24 * 60 * 60 // days ago
+			let block_height_min = calcNEARBlockHeight() - query_time
+			let block_timestamp_min = (new Date().getTime()  - (query_time * 1000)) * 1000
+
+			fl.log("queryIndexer words", words);
 			fl.error("queryIndexer block_height_min", block_height_min);
 			fl.error("queryIndexer block_timestamp_min", block_timestamp_min);
 
@@ -35,7 +36,7 @@ export const queryIndexer = functions.https.onRequest((req, res) => {
               ) AS hits
            FROM (
 						    SELECT account_id
-						    FROM ACCOUNTS
+						    FROM accounts
 						    WHERE last_update_block_height > ${block_height_min} 
 						      AND account_id LIKE '${words.length < 4 ? '' : '%'}${words}${words.length < 3 ? '' : '%'}'
 						) AS accounts
@@ -45,16 +46,16 @@ export const queryIndexer = functions.https.onRequest((req, res) => {
         LIMIT 50
 			`
 
-			// fl.log("queryIndexer query", query);
+			fl.log("queryIndexer query", JSON.stringify(query, null, 2))
 			let result = await pgDB.queryMainnet(query)
 
-			fl.log("queryIndexer result", result);
+			fl.log("queryIndexer result", result.rows)
 
-			res.send({ contracts: result.rows });
+			res.send({ contracts: result.rows })
 			return result
 		}catch (e) {
-			fl.error("queryIndexer Error", e);
-			res.status(502).send("Server Error");
+			fl.error("queryIndexer Error", e)
+			res.status(502).send("Server Error")
 			return Promise.reject(e)
 		}
 	})

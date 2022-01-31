@@ -1,38 +1,47 @@
-import {createStore} from "vuex";
+import { defineStore } from 'pinia'
+import { useStorage } from '@vueuse/core'
 
-type Todo = {
-    id: number,
-    complete: boolean,
-    title: string,
+export const useMainStore = defineStore({
+	id: 'main',
+	state: () => ({
+		contracts: useStorage('contracts', [])
+	}),
+	getters: {
+		getContracts(): [] {
+			return this.contracts
+		},
+	},
+	actions: {
+		getContractById(account_id: string): any {
+			console.log('getContractById', account_id)
+			let index = this.contracts.findIndex((c: Contract)=> c.account_id === account_id)
+			let contract = null
+
+			console.log('getContractById index', index)
+			if(index !== -1)
+				contract = this.contracts[index]
+
+			return contract
+		},
+		updateContract(contract: Contract) {
+			console.log('updateContract', contract)
+			let index = this.contracts.findIndex((c: Contract)=> c.account_id === contract.account_id)
+			if(index === -1)
+				this.contracts.push(contract);
+			else
+				this.contracts.splice(index, 1, contract)
+		},
+		removeContract(index: number) {
+			this.contracts.splice(index, 1)
+		}
+	},
+})
+export interface Contract {
+	account_id: string;
+	hits: number;
+	parsingContract: boolean;
+	show_methods: boolean;
+	methods?: [];
+	probableInterfaces?: [];
+	byMethod?: object;
 }
-
-type State = {
-    todoList: Array<Todo>
-}
-
-const state: State = {
-  todoList: [],
-};
-
-const mutations = {
-  createTodo(state: State, todo: Todo) {
-    state.todoList.push({
-      id: todo.id,
-      complete: todo.complete,
-      title: todo.title,
-    });
-  },
-  editTodo(state: State, todo: Todo) {
-    const index = state.todoList.findIndex(
-        (item) => item.id === todo.id
-    );
-    state.todoList[index] = todo;
-  },
-  removeTodo(state: State, id: number) {
-    state.todoList = state.todoList.filter(
-        (item) => item.id !== id
-    );
-  },
-};
-
-export const store = createStore({state, mutations});

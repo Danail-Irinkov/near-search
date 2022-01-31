@@ -1,16 +1,14 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-// @ts-ignore
 import WindiCSS from 'vite-plugin-windicss'
 
-// @ts-ignore
 console.log('import.meta.env.LOCAL_API', process.env.LOCAL_API)
 let VITE_ENV: any = {}
-VITE_ENV["API_URL"] = JSON.stringify("https://us-central1-near-search-3807d.cloudfunctions.net")
-// @ts-ignore
+VITE_ENV["API_URL"] = JSON.stringify("https://us-central1-near-search-3807d.cloudfunctions.net") // prod
+
 if (process.env.LOCAL_API) {
-	VITE_ENV["API_URL"] = JSON.stringify("http://localhost:5001/near-search-3807d/us-central1")
+	VITE_ENV["API_URL"] = JSON.stringify("http://localhost:5001/near-search-3807d/us-central1") // dev
 }
 
 console.log('VITE_ENV', VITE_ENV)

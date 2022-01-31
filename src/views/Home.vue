@@ -16,37 +16,169 @@
 					<fa-icon v-if="isSearching" icon="spinner" class="fa-spin"/>
 					<fa-icon v-else icon="search"/>
 				</span>
+				<span class="search-btn-mock" v-if="showMockResult" @click="mockSearch">
+					<fa-icon v-if="isSearching" icon="spinner" class="fa-spin"/>
+					<fa-icon v-else icon="chevron-right"/>
+				</span>
 			</form>
 		</div>
-		<transition mode="out-in" name="expand">
+		<expand-height-transition>
 			<div class="contracts" v-show="isResult">
 				<div class="row">
-					<div class="col-span-9 mb-2">
+					<div class="col-span-8 mb-2">
 						<h3 class="text-headline text-left"></h3>
 					</div>
-					<div class="col-span-3 mb-2">
-						<h4 class="text-headline text-center italic">Usage</h4>
+					<div class="col-span-2 mb-2" v-tooltip:right.tooltip="'Usage in last 4 weeks'">
+						<fa-icon icon="stopwatch" style="font-size: 24px"
+										 />
+					</div>
+					<div class="col-span-2 mb-2">
+<!--						<h4 class="text-headline text-center italic">-->
+<!--							<fa-icon icon="cog"/>-->
+<!--						</h4>-->
 					</div>
 					<div class="row"
-						 v-for="contract in contracts">
-						<div class="col-span-9 link"
+						 v-for="(contract, contract_index) in contracts">
+						<div class="col-span-8 link"
 								 @click="fetchContract(contract)">
-							<h3 class="text-headline text-left">{{ contract.account_id }}</h3>
+							<h3 class="text-headline text-left">
+								{{ contract.account_id }}
+							
+								<span class="contract-spinner" v-if="contract.parsingContract">
+									<fa-icon icon="circle-notch" class="fa-spin"/>
+								</span>
+							</h3>
 						</div>
-						<div class="col-span-3">
+						<div class="col-span-2">
 							<h3 class="text-headline text-center">{{ contract.hits }}</h3>
 						</div>
-						<transition mode="out-in" name="expand">
-							<div v-if="contract.methods && contract.show_methods" class="col-span-12">
-								<div v-for="method in contract.methods">
-									<h4 class="text-headline text-left">{{ method }}</h4>
-								</div>
+						<div class="col-span-2">
+							<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'NEAR Explorer'">
+								<button class="outline-0" style="font-size: 24px; overflow: hidden;"
+												v-if="contracts[contract_index].account_id"
+												@click="openLinkNewTab(`https://explorer.near.org/accounts/${contracts[contract_index].account_id}`)">
+									<img :src="NEARsvg" class="near-explorer-logo" alt="near-explorer-logo" />
+								</button>
 							</div>
-						</transition>
+							<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'Stats Gallery'">
+								<button class="outline-0" style="font-size: 24px; overflow: hidden;"
+												v-if="contracts[contract_index].account_id"
+												@click="openLinkNewTab(`https://stats.gallery/mainnet/${contracts[contract_index].account_id}/overview?t=week`)">
+									<img :src="statsGalleryLogo" class="stats-gallery-logo" alt="stats-gallery-logo" />
+								</button>
+							</div>
+						</div>
+						<div v-if="(!contract.methods || !Object.keys(contract.methods).length) && contract.show_methods"
+								 class="col-span-12 text-left text-lg pl-4 my-4">
+							No Contract Found
+						</div>
+						<div v-if="contract.methods && contract.show_methods" class="col-span-12">
+							<div v-for="(value, method) in contract.methods" class="method w-full">
+								<div class="text-left w-full"
+										 @click="toggleMethod(contract_index, method)">
+									<fa-icon class="method-chevron ml-4"
+													 :class="{ 'rotate-chevron-down': isContractMethodOpened(contract_index, method)}"
+											icon="chevron-right"/>
+									<div class="method ml-4 pointer text-lg">
+										{{ method }}
+									</div>
+								</div>
+								<expand-height-transition class="col-span-12">
+									<div class="row text-left pl-8 pointer" style="min-height: 24px"
+											 v-if="isContractMethodOpened(contract_index, method)">
+										<div class="method-inputs col-span-9 grid grid-cols-12">
+											<div class="col-span-2 text-center">
+												<fa-icon icon="list-ul" class="align-bottom mt-3"/>
+											</div>
+											<div class="col-span-10 relative">
+												<input
+													v-model="contracts[contract_index].methods[method].arguments"
+													type="text"
+													class="m-0 p-2"
+												/>
+												<span class="absolute" style="right: -7px; top: 15px; font-size: 12px;">
+													{JSON}
+												</span>
+											</div>
+											<div class="col-span-2 text-center">
+												<fa-icon icon="hand-holding-usd" class="align-bottom mt-3"/>
+											</div>
+											<div class="col-span-10 relative">
+												<input
+													v-model="contracts[contract_index].methods[method].deposit"
+													type="text"
+													class="m-0 mb-4 p-2"
+												/>
+												<span class="absolute right-0" style="top: 3px; font-size: 27px;">
+													Ⓝ
+												</span>
+											</div>
+										</div>
+										<div class="method-actions grid col-span-3 text-center justify-center items-center">
+											<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'Call Function'">
+												<button class="outline-0" style="font-size: 32px; transform: scale(0.8)"
+																@click="callMethod(contract_index, method)">
+													<fa-icon v-if="isContractMethodInCall(contract_index, method)" icon="circle-notch" class="fa-spin"/>
+													<fa-icon v-else icon="play"/>
+												</button>
+											</div>
+										</div>
+										<div class="grid grid-cols-12 col-span-9">
+											<div class="grid grid-cols-12 col-span-12" v-if="contracts[contract_index].methods[method].logs">
+												<div class="col-span-2 inline-grid justify-center">
+													<fa-icon icon="clipboard-list" class="self-center"/>
+												</div>
+												<div class="col-span-10 relative">
+													<textarea-auto class="m-0 p-2"
+																				 :value="contracts[contract_index].methods[method].logs"
+																				 disabled>
+													</textarea-auto>
+													<span class="textarea-label">
+														Logs
+													</span>
+												</div>
+											</div>
+											
+											<div class="grid grid-cols-12 col-span-12" v-if="contracts[contract_index].methods[method].result">
+												<div class="col-span-2 inline-grid justify-center">
+													<fa-icon icon="receipt" class="self-center"/>
+												</div>
+												<div class="col-span-10 relative">
+													<textarea-auto class="m-0 p-2"
+																				 :value="contracts[contract_index].methods[method].result"
+																				 disabled
+																				 :rows="2">
+													</textarea-auto>
+													<span class="textarea-label">
+														Result
+													</span>
+												</div>
+											</div>
+										</div>
+										<div class="method-actions grid col-span-3 text-center justify-center items-center">
+											<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'Clear Logs'">
+												<button class="outline-0" style="font-size: 24px"
+																v-if="contracts[contract_index].methods[method].logs"
+																@click="contracts[contract_index].methods[method].logs = ''">
+													<fa-icon icon="times"/>
+												</button>
+											</div>
+											<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'Clear Result'">
+												<button class="outline-0" style="font-size: 24px"
+																v-if="contracts[contract_index].methods[method].result"
+																@click="contracts[contract_index].methods[method].result = ''">
+													<fa-icon icon="times"/>
+												</button>
+											</div>
+										</div>
+									</div>
+								</expand-height-transition>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
-		</transition>
+		</expand-height-transition>
 	</div>
 </template>
 
@@ -55,10 +187,26 @@ import { Head } from '@egoist/vue-head'
 import * as nearAPI from 'near-api-js'
 import near_config from '../components/near_config'
 import {parseContract} from 'near-contract-parser'
+import NEARsvg from '../assets/NEAR/SVG/near_icon.svg'
+import statsGalleryLogo from '../assets/stats_gallery_logo.png'
+import deepmerge from 'deepmerge'
+import { mapStores } from 'pinia'
+import { useMainStore } from '../store/index'
 
 export default {
 	el: '#near_search',
 	name: 'NearSearch',
+	inject: {
+		openLinkNewTab: {
+			from: 'openLinkNewTab'
+		}
+	},
+	setup() {
+		return {
+			NEARsvg,
+			statsGalleryLogo
+		};
+	},
 	components: {
 		Head,
 	},
@@ -67,6 +215,7 @@ export default {
 			contracts: [],
 			isSearching: false,
 			isResult: false,
+			showMockResult: false,
 			searchQuery: '',
 			network: 'mainnet',
 			near: {},
@@ -74,6 +223,8 @@ export default {
 	},
 	async mounted() {
 		console.log('mounted Start 2', window.API_URL)
+		this.showMockResult = window.API_URL.indexOf('localhost') !== -1
+		
 		let options = near_config('mainnet')
 		
 		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
@@ -81,7 +232,7 @@ export default {
 		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
 	},
 	computed: {
-	
+		...mapStores(useMainStore),
 	},
 	filters: {
 	},
@@ -93,8 +244,11 @@ export default {
 				this.isSearching = true;
 				let res = await this.axios.post(window.API_URL+'/queryIndexer', { query: this.searchQuery })
 				console.timeEnd('queryPool')
-				console.log('queryPool res', res)
+				console.log('queryPool res', res.data.contracts)
 				this.contracts = [...res.data.contracts]
+				
+				this.updateContractsFromLocalStorage()
+				
 				this.isSearching = false
 				this.isResult = this.contracts && this.contracts.length
 				return res
@@ -105,13 +259,54 @@ export default {
 				return Promise.reject(e)
 			}
 		},
-		removeSearchQuery: function() {
+		mockSearch() {
+			this.contracts = [
+				{ account_id: 'daniellau.near', hits: '85' },
+		    { account_id: 'dante18.near', hits: '13' },
+		    { account_id: 'dangvanha.near', hits: '9' },
+		    { account_id: 'danielflanagan.near', hits: '3' }
+		  ];
+			this.updateContractsFromLocalStorage()
+			this.isResult = true;
+		},
+		updateContractsFromLocalStorage() {
+			let stored_contracts = this.mainStore.contracts
+			
+			for (let key in this.contracts) {
+				let contract = this.contracts[key]
+				let stored_index = stored_contracts.findIndex((c)=> c.account_id === contract.account_id)
+				console.log('stored_contracts', stored_contracts[stored_index])
+				if(stored_index !== -1) {
+					console.log('stored_contracts merged', deepmerge(contract, stored_contracts[stored_index]))
+					this.contracts[key] = deepmerge(contract, stored_contracts[stored_index])
+				}
+			}
+		},
+		removeSearchQuery() {
 			this.searchQuery = '';
 			this.isResult = false;
+		},
+		isContractMethodOpened(contract_index, method) {
+			return this.contracts[contract_index]?.methods[method]?.is_opened
+		},
+		isContractMethodInCall(contract_index, method) {
+			return this.contracts[contract_index]?.methods[method]?.is_in_call
+		},
+		toggleMethod(contract_index, method) {
+			console.log('toggleMethod', method)
+			this.contracts[contract_index].methods[method].is_opened = !this.contracts[contract_index].methods[method].is_opened
+			
+		},
+		callMethod(contract_index, method) {
+			let contract_id = this.contracts[contract_index].account_id
+			console.log('Calling a method', contract_id, method)
+			this.mainStore.updateContract(this.contracts[contract_index])
+			this.contracts[contract_index].methods[method].is_in_call = !this.contracts[contract_index].methods[method].is_in_call
 		},
 		async fetchContract(contract){
 			try {
 				console.log('fetchContract Start')
+				contract.parsingContract = true
 				let parsed_contract
 				if (!contract.methods) {
 					const { code_base64 } = await this.near.connection.provider.query({
@@ -122,11 +317,35 @@ export default {
 					console.log('fetchContract Start 2')
 					parsed_contract = await parseContract(code_base64)
 					console.log('fetchContract parsed_contract', parsed_contract)
-					contract.methods = parsed_contract.methodNames
+					contract.byMethod = parsed_contract.byMethod
+					
+					console.log('fetchContract contract', contract)
+					if(!contract.methods)
+						contract.methods = {}
+					
+					for (let method of parsed_contract.methodNames) {
+						if(method && !contract.methods[method])
+							contract.methods[method] = {
+							name: method,
+							is_opened: false,
+							is_in_call: false,
+							deposit: 0,
+							arguments: '{}',
+							logs: '',
+							result: '',
+						}
+					}
+					// contract.methods = methods
+					contract.probableInterfaces = parsed_contract.probableInterfaces
 				}
 				contract.show_methods = !contract.show_methods
-				return parsed_contract
+				contract.parsingContract = false
+				
+				this.mainStore.updateContract(contract)
+				
+				return contract
 			} catch (e) {
+				contract.parsingContract = false
 				console.error('fetchContract Error: ', e)
 				return Promise.reject(e)
 			}
@@ -135,7 +354,7 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 $c-white: #F7EFE2;
 $c-black: #00000042;
 $c-warning: #F9A603;
@@ -165,7 +384,7 @@ h2 {
 	color: #555;
 	height: 100%;
 	text-align: center;
-	padding: 10vw 10vh;
+	padding: 12vh 5vw;
 	max-width: 600px;
 	margin: 0 auto;
 }
@@ -193,6 +412,45 @@ h2 {
 	position: absolute;
 	transform: rotate(70deg);
 }
+.search-btn-mock {
+	font-size: 26px;
+	color: val($c-warning);
+	cursor: pointer;
+	top: 0;
+	right: -30px;
+	position: absolute;
+}
+.contract-spinner {
+	//@apply col-span-12 py-4;
+	font-size: 36px;
+	color: val($c-warning);
+	display: inline-block;
+	float: right;
+	transform: scale(0.8);
+	& > svg {
+		margin: 0 auto;
+	}
+}
+.method {
+	//font-size: 26px;
+	color: val($c-warning);
+	cursor: pointer;
+	display: inline-block;
+}
+.method-chevron {
+	//font-size: 26px;
+	width: 16px;
+	height: 16px;
+	color: val($c-warning);
+	cursor: pointer;
+	display: inline-block;
+	top: 1px;
+	position: relative;
+	transition-duration: 0.5s;
+}
+.rotate-chevron-down {
+	transform: rotateZ(90deg);
+}
 .searchForm {
 	margin-bottom: 2.6rem;
 	position: relative;
@@ -212,21 +470,6 @@ h2 {
 	//padding-top: 16px;
 	//margin-bottom: 12px;
 	letter-spacing: 0;
-}
-
-/* vuejs transition */
-.expand-transition {
-	transition-duration: 0.5s;
-	transition: all .5s ease;
-	padding: 10px;
-	min-height: 1500px;
-	overflow: hidden;
-}
-
-.expand-enter, .expand-leave {
-	height: 0;
-	padding: 0 10px;
-	opacity: 0;
 }
 
 /* Material Design code below */
@@ -252,6 +495,7 @@ h2 {
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13), 0 1px 5px 0 rgba(0, 0, 0, 0.08);
 }
 
+button:focus 		{ outline:none; }
 input:focus 		{ outline:none; }
 
 [type="text"], [type="password"], [type="date"], [type="datetime"], [type="datetime-local"], [type="month"], [type="week"], [type="email"], [type="number"], [type="search"], [type="tel"], [type="time"], [type="url"], [type="color"], textarea {
@@ -273,8 +517,8 @@ input:focus 		{ outline:none; }
 	-moz-appearance: none;
 }
 input[type="text"], input[type="password"], input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="month"], input[type="week"], input[type="email"], input[type="number"], input[type="search"], input[type="tel"], input[type="time"], input[type="url"], input[type="color"], textarea {
-	padding: 1rem 0 0.5rem 0;
-	margin: 1.75rem 0 0.5rem;
+	//padding: 1rem 0 0.5rem 0;
+	//margin: 1.75rem 0 0.5rem;
 	border-bottom: 1px solid #e0e0e0;
 	border-radius: 0;
 	background: transparent;
@@ -306,5 +550,29 @@ input[type="text"].with-floating-label:focus + label.floating-label, input[type=
 	color: var($c-near-blue);
 	font-size: 0.75rem;
 	top: -56px;
+}
+textarea, pre {
+	border: 0;
+	font-size: 1rem;
+	width: 100%;
+	padding: 10px;
+	border-bottom: 1px solid #eeeeee;
+}
+.textarea-label {
+	position:absolute;
+	right: 0;
+	top: 7px;
+	font-size: 12px;
+	opacity: 0.7;
+}
+.near-explorer-logo {
+	width: 32px;
+	height: 32px;
+	transform: scale(1.3);
+}
+.stats-gallery-logo {
+	width: 32px;
+	height: 32px;
+	transform: scale(0.7);
 }
 </style>
