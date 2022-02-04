@@ -31,7 +31,7 @@ library.add(faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 	faReceipt, faStopwatch, faCog )
 
 // @ts-ignore
-import tooltipDirective from "./directives/tooltip.js";
+import tooltipDirective from "./directives/tooltip";
 
 // Global Methods
 const autoLinkText = function (text: string, linkClass = 'descriptionLink') {

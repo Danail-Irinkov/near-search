@@ -21,7 +21,6 @@ describe('NEAR Search Tests', () => {
 			sinon.stub(functions.logger, 'log')
 		}
 		myFunctions = require('../src/index.ts');
-		// testSlackCall1 = require('./call1.test.js');
 	});
 
 	after(() => {
@@ -33,18 +32,34 @@ describe('NEAR Search Tests', () => {
 		// test.cleanup();
 	});
 
-	describe('Searching for "dan"', () => {
+	// describe('Searching for "dan"', () => {
+	// 	it('returns a list', async () => {
+	// 		try {
+	// 			let res = await testHTTPFunction(myFunctions, 'queryIndexer',
+	// 				{
+	// 					body: {
+	// 						query: 'dan'
+	// 					}
+	// 				}
+	// 			)
+	// 			console.warn('Searching for "dan"', res)
+	// 			assert.isTrue(!!(res.contracts))
+	//
+	// 		}catch (e) {
+	// 			return Promise.reject(e)
+	// 		}
+	// 	})
+	// })
+	describe('Updating Indexer', () => {
 		it('returns a list', async () => {
 			try {
-				let res = await testHTTPFunction(myFunctions, 'queryIndexer',
+				let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
 					{
-						body: {
-							query: 'dan'
-						}
+						body: {}
 					}
 				)
-				console.warn('Searching for "dan"', res)
-				assert.isTrue(!!(res.contracts))
+				console.warn('Updating Indexer: ', res)
+				// assert.isTrue(!!(res.contracts))
 
 			}catch (e) {
 				return Promise.reject(e)

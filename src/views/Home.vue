@@ -230,6 +230,9 @@ export default {
 		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
 		
 		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
+		
+		// TODO: if not logged in with NEAR ask user to requestSigning for him
+		
 	},
 	computed: {
 		...mapStores(useMainStore),
@@ -302,6 +305,9 @@ export default {
 			console.log('Calling a method', contract_id, method)
 			this.mainStore.updateContract(this.contracts[contract_index])
 			this.contracts[contract_index].methods[method].is_in_call = !this.contracts[contract_index].methods[method].is_in_call
+			
+			// TODO: do the calling method flow
+			
 		},
 		async fetchContract(contract){
 			try {
@@ -329,8 +335,8 @@ export default {
 							name: method,
 							is_opened: false,
 							is_in_call: false,
-							deposit: 0,
 							arguments: '{}',
+							deposit: 0,
 							logs: '',
 							result: '',
 						}

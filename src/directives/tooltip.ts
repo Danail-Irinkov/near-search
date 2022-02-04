@@ -1,15 +1,17 @@
-const tooltipDirective = (app) => {
+import {DirectiveBinding} from "vue";
+
+const tooltipDirective = (app: any) => {
 	app.directive("tooltip", {
-		mounted(el, binding) {
+		mounted(el: Element, binding: DirectiveBinding) {
 			init(el, binding);
 		},
-		updated(el, binding) {
+		updated(el: Element, binding: DirectiveBinding) {
 			init(el, binding);
 		}
 	});
 };
 
-function init(el = {}, binding = {}) {
+function init(el: Element, binding: DirectiveBinding) {
 	// console.log('el', el)
 	// console.log('binding', binding)
 	let position = binding.arg || "top";

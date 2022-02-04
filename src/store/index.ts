@@ -1,18 +1,24 @@
 import { defineStore } from 'pinia'
-import { useStorage } from '@vueuse/core'
+import { useStorage, RemovableRef } from '@vueuse/core'
+
+export interface RootState {
+	contracts: RemovableRef<Array<Contract>>;
+}
 
 export const useMainStore = defineStore({
 	id: 'main',
-	state: () => ({
-		contracts: useStorage('contracts', [])
-	}),
+	state: () => {
+		return {
+			contracts: useStorage('contracts', [])
+		} as RootState
+	},
 	getters: {
-		getContracts(): [] {
+		getContracts(): Contract[] {
 			return this.contracts
 		},
 	},
 	actions: {
-		getContractById(account_id: string): any {
+		getContractById(account_id: string): Contract | null {
 			console.log('getContractById', account_id)
 			let index = this.contracts.findIndex((c: Contract)=> c.account_id === account_id)
 			let contract = null
