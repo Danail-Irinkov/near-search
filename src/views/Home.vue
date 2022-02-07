@@ -23,38 +23,49 @@
 			</form>
 		</div>
 		<expand-height-transition>
-			<div class="contracts" v-show="isResult">
+			<div class="contracts pl-8" v-show="isResult">
 				<div class="row">
-					<div class="col-span-6 mb-2">
-						<h3 class="text-headline text-left"></h3>
-					</div>
-					<div class="col-span-2 mb-2" v-tooltip:right.tooltip="'Deposits Total Ⓝ in the last 4 weeks'">
-						<fa-icon icon="funnel-dollar" style="font-size: 24px"/>
-					</div>
-					<div class="col-span-2 mb-2" v-tooltip:right.tooltip="'Method Calls in the last 4 weeks'">
-						<fa-icon icon="stopwatch" style="font-size: 24px" @click="show_hits = !show_hits"/>
-					</div>
-					<div class="col-span-2 mb-2">
-<!--						<h4 class="text-headline text-center italic">-->
-<!--							<fa-icon icon="cog"/>-->
-<!--						</h4>-->
+					<div class="row" style="max-height: 36px">
+						<div class="mb-2 transition-all"
+									:class="{'col-span-6': show_hits, 'col-span-8': !show_hits }">
+							<h3 class="text-headline text-left"></h3>
+						</div>
+						<div class="col-span-2 mb-2"
+								 v-tooltip:right.tooltip="'Deposits Total Ⓝ in the last 4 weeks'">
+							<fa-icon icon="funnel-dollar" style="font-size: 24px"/>
+						</div>
+						<div class="mb-2 transition-all cursor-pointer"
+								 :class="{'col-span-2 show': show_hits, 'col-span-1 shift-left': !show_hits }"
+								 v-tooltip:right.tooltip="'Method Calls in the last 4 weeks'">
+							<fa-icon icon="stopwatch" style="font-size: 24px" @click="show_hits = !show_hits"/>
+						</div>
+						<div class="mb-2"
+								 :class="{'col-span-1': show_hits, 'col-span-1': !show_hits }">
+	<!--						<h4 class="text-headline text-center italic">-->
+	<!--							<fa-icon icon="cog"/>-->
+	<!--						</h4>-->
+						</div>
 					</div>
 					<div class="row"
 						 v-for="(contract, contract_index) in contracts">
-						<div class="col-span-6 link"
+						<div class="link transition-all"
+								 :class="{'col-span-6': show_hits, 'col-span-8': !show_hits }"
 								 @click="fetchContract(contract)">
 							<h3 class="text-headline text-left">
 								{{ contract.account_id }}
-							
 								<span class="contract-spinner" v-if="contract.parsingContract">
 									<fa-icon icon="circle-notch" class="fa-spin"/>
 								</span>
 							</h3>
 						</div>
 						<div class="col-span-2">
-							<h3 class="text-headline text-center">{{ abbreviateNumber(contract.total_deposits) }}</h3>
+							<h3 class="text-headline text-center transition-all"
+									:class="{'font-semibold': abbreviateNumber(contract.total_deposits).indexOf('K') !== -1, 'font-bold text-slate-800': abbreviateNumber(contract.total_deposits).indexOf('M') !== -1}">
+								{{ abbreviateNumber(contract.total_deposits) }}
+							</h3>
 						</div>
-						<div class="col-span-2" v-if="show_hits">
+						<div class="col-span-2 transition-all hidden-right" v-if="show_hits"
+								 :class="{ 'show': show_hits, 'font-semibold': abbreviateNumber(contract.total_deposits).indexOf('K') !== -1, 'font-bold text-slate-800': abbreviateNumber(contract.total_deposits).indexOf('M') !== -1}">
 							<h3 class="text-headline text-center">{{ abbreviateNumber(contract.hits) }}</h3>
 						</div>
 						<div class="col-span-2">
@@ -481,7 +492,13 @@ h2 {
 	line-height: 32px;
 	//padding-top: 16px;
 	//margin-bottom: 12px;
+	height: 100%;
 	letter-spacing: 0;
+	word-break: break-word;
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	text-align: center;
 }
 
 /* Material Design code below */
@@ -586,5 +603,38 @@ textarea, pre {
 	width: 32px;
 	height: 32px;
 	transform: scale(0.7);
+}
+.shift-left {
+	font-size: 24px;
+	position: relative;
+	left: -30px;
+	//top: -5px;
+}
+
+// Slide Out animation
+.transition-all, * {
+	transition: all .75s ease;
+}
+
+.transition-all.show {
+	opacity: 1;
+	//height: 150px;
+	width: auto!important;
+}
+.transition-all.hide {
+	width: 1px;
+	opacity: 0;
+}
+.hidden-right {
+	width: 0!important;
+}
+.resizable-div {
+	 width: 100%;
+	 animation-name: resize-to;
+	 animation-duration: 0.5s;
+}
+@keyframes resize-to {
+	from {width: 0;}
+	to {width: 100px;}
 }
 </style>

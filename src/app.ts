@@ -11,10 +11,19 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 
 import { Buffer } from 'buffer'
-
+console.log('!!!!!!!!!!!process.env: ', window)
 if (window) {
 	// @ts-ignore
 	window.Buffer = Buffer
+
+	// @ts-ignore
+	window.API_URL = 'http://localhost:5001/near-search-3807d/europe-west3'
+
+	// @ts-ignore
+	if (process.env.NODE_ENV === 'production'){
+		// @ts-ignore
+		window.API_URL = 'https://europe-west3-near-search-3807d.cloudfunctions.net'
+	}
 }
 import TextAreaAutosize from './components/Inputs/TextAreaAutosize.vue'
 import ExpandHeightTransition from './components/Transitions/ExpandHeightTransition.vue'

@@ -182,7 +182,7 @@ if(dYocto != null){
   } else {
     first = dYocto.substring(0, length_mid);
     second = dYocto.substring(length_mid+1, length);
-  }
+  } 
   // ctx._source.first = first;
   // second = second.substring(0, 10);
   // ctx._source.second = second;

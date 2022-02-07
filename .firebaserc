@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "near-search-3807d"
+  },
+  "targets": {
+    "near-search-3807d": {
+      "hosting": {
+        "searchnear": [
+          "near-search-3807d"
+        ]
+      }
+    }
   }
 }

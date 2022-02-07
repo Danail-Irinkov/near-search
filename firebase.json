@@ -8,7 +8,8 @@
     "predeploy": "npm --prefix \"$RESOURCE_DIR\" run build"
   },
   "hosting": {
-    "public": "src/public",
+	  "target": "searchnear",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",

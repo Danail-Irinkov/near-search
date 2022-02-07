@@ -36,6 +36,7 @@ export const queryIndexer = functions.region('europe-west3').https.onRequest((re
 		try {
 			fl.log("queryIndexer input", req.body);
 			let word = String(req.body.query).split(' ')[0]
+			let contracts = []
 
 			let result: any = await SearchRecordsByQuery('receipts2', {
 				query: {
@@ -62,7 +63,6 @@ export const queryIndexer = functions.region('europe-west3').https.onRequest((re
 			console.log("queryIndexer aggregations", result.body.aggregations.accounts.buckets[0])
 			console.log("queryIndexer aggregations.length", result.body.aggregations.accounts.buckets.length)
 
-			let contracts = []
 			for (let agg of result.body.aggregations.accounts.buckets) {
 				contracts.push({
 					account_id: agg.key,
