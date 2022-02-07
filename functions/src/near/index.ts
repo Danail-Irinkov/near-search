@@ -2,6 +2,8 @@
 import {Near, NearConfig} from "near-api-js/lib/near";
 import * as nearAPI from "near-api-js";
 import {ReceiptDoc, TransactionDoc} from "../types";
+import * as functions from "firebase-functions"
+const fl = functions.logger;
 
 export default {
 	initNEAR: async function (): Promise<Near> {
@@ -25,28 +27,35 @@ export default {
 		return near.connection.provider.chunk(chunk_hash);
 	},
 	parseBlock: async function (near: Near, block: any): Promise<any> {
-		let chunk_queries = []
+		try {
+			if (!block || !block.chunks) return null
 
-		// console.time('parseBlock get Chunks')
-		for (let chunk of block.chunks) {
-			if (chunk.chunk_hash) {
-				// fl.log('updateIndex shard_id', chunk.chunk_hash, chunk.shard_id);
-				chunk_queries.push(this.getChunk(near, chunk.chunk_hash))
+			let chunk_queries = []
+
+			// console.time('parseBlock get Chunks')
+			for (let chunk of block.chunks) {
+				if (chunk.chunk_hash) {
+					// fl.log('updateIndex shard_id', chunk.chunk_hash, chunk.shard_id);
+					chunk_queries.push(this.getChunk(near, chunk.chunk_hash))
+				}
 			}
+			let chunks = await Promise.all(chunk_queries)
+			// console.timeEnd('parseBlock get Chunks')
+
+			// let transactions: any = []
+			let receipts: any = []
+
+			for (let chunk of chunks) {
+				// _parseTransactions(block.header.height, chunk, transactions) // Disabled as receipts are better proof of activity
+				_parseReceipts(block.header.height, chunk, receipts)
+			}
+
+			// return {transactions, receipts}
+			return receipts
+		} catch (e) {
+			fl.error(`Block ${block.header.height} was NOT Parsed Err: `, e)
+			return null //Avoid interrupting all other blocks
 		}
-		let chunks = await Promise.all(chunk_queries)
-		// console.timeEnd('parseBlock get Chunks')
-
-		// let transactions: any = []
-		let receipts: any = []
-
-		for (let chunk of chunks) {
-			// _parseTransactions(block.header.height, chunk, transactions) // Disabled as receipts are better proof of activity
-			_parseReceipts(block.header.height, chunk, receipts)
-		}
-
-		// return {transactions, receipts}
-		return receipts
 	},
 }
 
@@ -144,7 +153,7 @@ function _parseReceipts(block: number, chunk: any, receipts: any) {
 					}
 
 					// console.log('updateIndex receipt_doc', receipt_doc);
-					if(receipt_doc.deposit !== '0' || receipt_doc.receiver_id !== 'aurora')
+					if(receipt_doc.deposit !== '0' || (receipt_doc.receiver_id !== 'aurora' && receipt_doc.receiver_id !== 'near'))
 						receipts.push(receipt_doc)
 				}
 			}

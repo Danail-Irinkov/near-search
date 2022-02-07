@@ -5,10 +5,10 @@ import WindiCSS from 'vite-plugin-windicss'
 
 console.log('import.meta.env.LOCAL_API', process.env.LOCAL_API)
 let VITE_ENV: any = {}
-VITE_ENV["API_URL"] = JSON.stringify("https://us-central1-near-search-3807d.cloudfunctions.net") // prod
+VITE_ENV["API_URL"] = JSON.stringify("https://europe-west3-near-search-3807d.cloudfunctions.net") // prod
 
 if (process.env.LOCAL_API) {
-	VITE_ENV["API_URL"] = JSON.stringify("http://localhost:5001/near-search-3807d/us-central1") // dev
+	VITE_ENV["API_URL"] = JSON.stringify("http://localhost:5001/near-search-3807d/europe-west3") // dev
 }
 
 console.log('VITE_ENV', VITE_ENV)

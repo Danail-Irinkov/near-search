@@ -1,0 +1,17 @@
+GET /receipts/_search
+{
+  "query": {
+    "match": {
+      "receiver_id": "near"
+    }
+  },
+  "size": 0,
+  "aggs": {
+    "accounts": {
+      "terms": {
+        "field": "signer_id"
+      }
+    }
+  }
+}
+

@@ -1,10 +1,6 @@
 import {QueryResult} from "pg";
+declare module '*';
 
-export declare module NodeJS  {
-	interface Global {
-		fl: string
-	}
-}
 export interface TransactionDoc {
 	hash: string,
 	block: number,

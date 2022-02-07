@@ -24,10 +24,12 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 	faCircleNotch, faPlay, faListUl, faHandHoldingUsd, faClipboardList,
+	faFunnelDollar,
 	faReceipt, faStopwatch, faCog } from '@fortawesome/free-solid-svg-icons'
 
 library.add(faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 	faCircleNotch, faPlay, faListUl, faHandHoldingUsd, faClipboardList,
+	faFunnelDollar,
 	faReceipt, faStopwatch, faCog )
 
 // @ts-ignore
@@ -59,4 +61,15 @@ let app = createApp(App)
 
 tooltipDirective(app)
 
+app.config.globalProperties.abbreviateNumber = function(number:number): string {
+	let num = Math.round(number)
+	let str = String(num)
+	if (str.length < 4) {
+		return str
+	} else if (str.length < 7) {
+		return Math.floor(num/1000) + 'K'
+	} else {
+		return Math.floor(num/1000000) + 'M'
+	}
+}
 app.mount("#app")

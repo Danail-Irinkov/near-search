@@ -32,40 +32,63 @@ describe('NEAR Search Tests', () => {
 		// test.cleanup();
 	});
 
-	// describe('Searching for "dan"', () => {
-	// 	it('returns a list', async () => {
-	// 		try {
-	// 			let res = await testHTTPFunction(myFunctions, 'queryIndexer',
-	// 				{
-	// 					body: {
-	// 						query: 'dan'
-	// 					}
-	// 				}
-	// 			)
-	// 			console.warn('Searching for "dan"', res)
-	// 			assert.isTrue(!!(res.contracts))
-	//
-	// 		}catch (e) {
-	// 			return Promise.reject(e)
-	// 		}
-	// 	})
-	// })
-	describe('Updating Indexer', () => {
+	describe('Searching for "near"', () => {
 		it('returns a list', async () => {
 			try {
-				let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
+				let res = await testHTTPFunction(myFunctions, 'queryIndexer',
 					{
-						body: {}
+						body: {
+							query: 'nft'
+						}
 					}
 				)
-				console.warn('Updating Indexer: ', res)
+				// console.warn('Searching for "near"', res)
 				// assert.isTrue(!!(res.contracts))
+				assert.isTrue(true)
 
 			}catch (e) {
 				return Promise.reject(e)
 			}
 		})
 	})
+// 	describe('Updating Indexer', () => {
+// 		it('returns a list', async () => {
+// 			try {
+// 				let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
+// 					{
+// 						body: {}
+// 					}
+// 				)
+// 				console.warn('Updating Indexer: ', res)
+// 				// assert.isTrue(!!(res.contracts))
+//
+// 			}catch (e) {
+// 				return Promise.reject(e)
+// 			}
+// 		})
+// 	})
+
+
+	// describe('Testing Migration Flow', () => {
+	// 	it('returns a list', async () => {
+	// 		try {
+	// 			let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
+	// 				{
+	// 					body: {
+	// 						query: 'near'
+	// 					}
+	// 				}
+	// 			)
+	// 			// console.warn('Searching for "near"', res)
+	// 			// assert.isTrue(!!(res.contracts))
+	// 			assert.isTrue(res === 'Success')
+	//
+	// 		}catch (e) {
+	// 			return Promise.reject(e)
+	// 		}
+	// 	})
+	// })
+
 })
 
 const hookPostData = {

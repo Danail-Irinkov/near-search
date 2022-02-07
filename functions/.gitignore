@@ -9,3 +9,5 @@ typings/
 node_modules/
 /near-search-3807d-firebase-adminsdk-ic0qs-c2fd7cff1b.json
 /near-search-3807d-firebase-adminsdk-ic0qs-021f1395c1.json
+/.runtimeconfig.json
+/credentials-898317-2022-Feb-04--14_28_45.csv

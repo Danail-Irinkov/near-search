@@ -5,7 +5,7 @@
 			<meta name="description" content="Search the NEAR Network for Contracts and review their methods" />
 		</Head>
 		<h1 class="cover-heading">NEAR Search</h1>
-		<div class="medium-6 medium-offset-3 ctrl">
+		<div class="medium-6 medium-offset-3 ctrl px-6">
 			<form class="searchForm" @submit.prevent="submitSearch">
 				<input type="text" v-model="searchQuery" placeholder="Search NEAR Contracts">
 				<span v-show="searchQuery" class="remove-btn"
@@ -25,12 +25,14 @@
 		<expand-height-transition>
 			<div class="contracts" v-show="isResult">
 				<div class="row">
-					<div class="col-span-8 mb-2">
+					<div class="col-span-6 mb-2">
 						<h3 class="text-headline text-left"></h3>
 					</div>
-					<div class="col-span-2 mb-2" v-tooltip:right.tooltip="'Usage in last 4 weeks'">
-						<fa-icon icon="stopwatch" style="font-size: 24px"
-										 />
+					<div class="col-span-2 mb-2" v-tooltip:right.tooltip="'Deposits Total Ⓝ in the last 4 weeks'">
+						<fa-icon icon="funnel-dollar" style="font-size: 24px"/>
+					</div>
+					<div class="col-span-2 mb-2" v-tooltip:right.tooltip="'Method Calls in the last 4 weeks'">
+						<fa-icon icon="stopwatch" style="font-size: 24px" @click="show_hits = !show_hits"/>
 					</div>
 					<div class="col-span-2 mb-2">
 <!--						<h4 class="text-headline text-center italic">-->
@@ -39,7 +41,7 @@
 					</div>
 					<div class="row"
 						 v-for="(contract, contract_index) in contracts">
-						<div class="col-span-8 link"
+						<div class="col-span-6 link"
 								 @click="fetchContract(contract)">
 							<h3 class="text-headline text-left">
 								{{ contract.account_id }}
@@ -50,7 +52,10 @@
 							</h3>
 						</div>
 						<div class="col-span-2">
-							<h3 class="text-headline text-center">{{ contract.hits }}</h3>
+							<h3 class="text-headline text-center">{{ abbreviateNumber(contract.total_deposits) }}</h3>
+						</div>
+						<div class="col-span-2" v-if="show_hits">
+							<h3 class="text-headline text-center">{{ abbreviateNumber(contract.hits) }}</h3>
 						</div>
 						<div class="col-span-2">
 							<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'NEAR Explorer'">
@@ -215,6 +220,7 @@ export default {
 			contracts: [],
 			isSearching: false,
 			isResult: false,
+			show_hits: false,
 			showMockResult: false,
 			searchQuery: '',
 			network: 'mainnet',
@@ -390,7 +396,7 @@ h2 {
 	color: #555;
 	height: 100%;
 	text-align: center;
-	padding: 12vh 5vw;
+	padding: 12vh 0;
 	max-width: 600px;
 	margin: 0 auto;
 }
