@@ -1,14 +1,29 @@
 import { defineStore } from 'pinia'
 import { useStorage, RemovableRef } from '@vueuse/core'
 
+export interface Contract {
+	account_id: string;
+	hits: number;
+	parsingContract: boolean;
+	show_methods: boolean;
+	methods?: [];
+	probableInterfaces?: [];
+	byMethod?: object;
+}
 export interface RootState {
+	show_hits: Boolean,
+	showContracts: Boolean,
+	resultsContracts: RemovableRef<Array<Contract>>,
 	contracts: RemovableRef<Array<Contract>>;
 }
 
-export const useMainStore = defineStore({
+export const useStore = defineStore({
 	id: 'main',
 	state: () => {
 		return {
+			show_hits: useStorage('show_hits', false),
+			showContracts: useStorage('showContracts', false),
+			resultsContracts: useStorage('resultsContracts', []),
 			contracts: useStorage('contracts', [])
 		} as RootState
 	},
@@ -42,12 +57,3 @@ export const useMainStore = defineStore({
 		}
 	},
 })
-export interface Contract {
-	account_id: string;
-	hits: number;
-	parsingContract: boolean;
-	show_methods: boolean;
-	methods?: [];
-	probableInterfaces?: [];
-	byMethod?: object;
-}
