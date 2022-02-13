@@ -16,7 +16,8 @@
     "apit": "cd functions & yarn testdev",
     "apiw": "cd functions & yarn watch",
     "apid": "cd functions & yarn deploy",
-    "lint": "eslint --ext .js,.ts --fix ."
+    "lint": "eslint --ext .js,.ts --fix .",
+		"build_contract": "cd contract && cargo build --target wasm32-unknown-unknown --release"
   },
   "author": "Danail Irinkov",
   "license": "MIT",
