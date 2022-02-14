@@ -11,3 +11,5 @@ node_modules/
 /near-search-3807d-firebase-adminsdk-ic0qs-021f1395c1.json
 /.runtimeconfig.json
 /credentials-898317-2022-Feb-04--14_28_45.csv
+
+firebase-debug.log
