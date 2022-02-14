@@ -194,7 +194,8 @@ export default {
 		return {
 			show_hits: false,
 			network: 'mainnet',
-			near: {}
+			near: {},
+			wallet: {},
 		}
 	},
 	setup() {
@@ -211,8 +212,7 @@ export default {
 		
 		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
 		
-		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
-		
+		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});		
 		// TODO: if not logged in with NEAR ask user to requestSigning for him
 		
 	},
@@ -235,13 +235,27 @@ export default {
 			
 		},
 		callMethod(index, method) {
-			let contract_id = this.store.resultsContracts[index].account_id
-			console.log('Calling a method', contract_id, method)
+			// let contract_id = this.store.resultsContracts[index].account_id
+			// console.log('Calling a method', contract_id, method)
 			this.store.updateContract(this.store.resultsContracts[index])
 			this.store.resultsContracts[index].methods[method].is_in_call = !this.store.resultsContracts[index].methods[method].is_in_call
 			
 			// TODO: do the calling method flow
-			
+			const contract = this.store.resultsContracts[index];
+			const contract_arguments = contract.methods[method].arguments;
+			const contract_deposit   = contract.methods[method].deposit;
+			const contract_function  = contract.methods[method].function;
+			const contract_id 		 = contract.account_id;
+
+			console.log("heasd");
+
+			console.log('contract_arguments', contract_arguments);
+			console.log('contract_deposit', contract_deposit);
+			console.log('contract_function', contract_function);
+			console.log('contract_id', contract_id);
+			console.log('method', method);
+
+			// const contract = new nearAPI.Contract()
 		},
 		async fetchContract(contract){
 			try {
