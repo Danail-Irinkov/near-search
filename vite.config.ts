@@ -18,9 +18,9 @@ console.log('process.env.NODE_ENV', process.env.NODE_ENV)
 export default defineConfig({
 	mode: process.env.NODE_ENV,
 	resolve: {
-		// alias: {
-		// 	'@': path.resolve()
-		// },
+		alias: {
+			'@': path.resolve(__dirname, './src')
+		},
 	},
 	publicDir: 'src/public',
 	plugins: [
