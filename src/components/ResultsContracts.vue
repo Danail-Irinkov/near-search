@@ -233,6 +233,9 @@ export default {
 			
 		},
 		async callMethod(index, method) {
+
+			window.process = { env: {}};
+
 			// let contract_id = this.store.resultsContracts[index].account_id
 			// console.log('Calling a method', contract_id, method)
 			this.store.updateContract(this.store.resultsContracts[index])
