@@ -11,7 +11,7 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 
 import { Buffer } from 'buffer'
-console.log('!!!!!!!!!!!process.env: ', window)
+
 if (window) {
 	// @ts-ignore
 	window.Buffer = Buffer

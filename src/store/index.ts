@@ -20,6 +20,7 @@ export interface RootState {
 export const useStore = defineStore({
 	id: 'main',
 	state: () => {
+		// @ts-ignore
 		return {
 			show_hits: useStorage('show_hits', false),
 			showContracts: useStorage('showContracts', false),

@@ -10,12 +10,12 @@ impl NearSearch {
     #[payable]
 	pub fn call_contract(&mut self, account_id: AccountId, method_name: String, args: String) {
         // Todo: if there is an error should return the deposit back to the sender
-        
-        let predecessor = env::predecessor_account_id(); 
+
+        let predecessor = env::predecessor_account_id();
         let current = env::current_account_id();
 
         if predecessor == current {
-            env::log("Cannot \"call_contract\" from \"call_contrac\"".as_bytes());
+            env::log("Cannot \"call_contract\" from \"call_contract\"".as_bytes());
             return;
         }
 
@@ -26,13 +26,13 @@ impl NearSearch {
             Promise::new(current).transfer(tax);
             amount -= tax;
         }
-        
+
         let gas = env::prepaid_gas();
 		let promise_index = env::promise_create(
-            account_id, 
-            method_name.as_bytes(), 
-            args.as_bytes(), 
-            amount, 
+            account_id,
+            method_name.as_bytes(),
+            args.as_bytes(),
+            amount,
             gas/2
         );
         env::promise_return(promise_index);

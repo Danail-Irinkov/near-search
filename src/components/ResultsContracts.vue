@@ -248,7 +248,7 @@ export default {
 			console.log(contract_deposit);
 
 			const TAX = new BN.BN("10000000000000000000000", 10);
-			if (contract_deposit && contract_deposit > 0) {				
+			if (contract_deposit && contract_deposit > 0) {
 				contract_deposit = TAX.add(new BN.BN(nearAPI.utils.format.parseNearAmount(contract_deposit), 10)).toString(10);
 			}
 
@@ -256,10 +256,10 @@ export default {
 			let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
 			
 			this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
-			this.wallet = new nearAPI.WalletConnection(this.near);	
+			this.wallet = new nearAPI.WalletConnection(this.near);
 
 			if(!this.wallet.isSignedIn()) {
-				this.wallet.requestSignIn(
+				return this.wallet.requestSignIn(
 					"srch.near", // contract requesting access
 					"Search Near", // optional
 					window.location.href, // optional
@@ -269,7 +269,7 @@ export default {
 
 			const near_cont = new nearAPI.Contract(
 				this.wallet.account(),
-				"srch.near", 
+				"srch.near",
 				{
 					viewMethods: [],
 					changeMethods: ["call_contract"],
@@ -289,6 +289,7 @@ export default {
 			// 	console.log('Error calling contract', e);
 			// }
 			console.log("Contract result: ", result);
+			contract.methods[method].name = result
 		},
 		async fetchContract(contract){
 			try {

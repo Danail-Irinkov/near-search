@@ -16,7 +16,7 @@ export default {
 			element.style.height = 'auto';
 		},
 		enter(element) {
-			console.log('transition enter')
+			// console.log('transition enter')
 			// const { width } = getComputedStyle(element);
 			/* eslint-disable no-param-reassign */
 			// element.style.width = width;
