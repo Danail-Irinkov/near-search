@@ -17,7 +17,9 @@
     "apiw": "cd functions & yarn watch",
     "apid": "cd functions & yarn deploy",
     "lint": "eslint --ext .js,.ts --fix .",
-		"build_contract": "cd contract && cargo build --target wasm32-unknown-unknown --release"
+    "build_contract": "cd contract && cargo build --target wasm32-unknown-unknown --release",
+    "near_deploy": "near deploy srch.near .\\contract\\target\\wasm32-unknown-unknown\\release\\near_search.wasm",
+    "contract_optimize_size": "cd contract && wasm-opt -Oz -o target/wasm32-unknown-unknown/release/near_search_optimized.wasm target/wasm32-unknown-unknown/release/near_search.wasm"
   },
   "author": "Danail Irinkov",
   "license": "MIT",
@@ -32,6 +34,7 @@
     "@vueuse/core": "^7.5.5",
     "autolinker": "^3.14.3",
     "axios": "^0.24.0",
+    "bn.js": "^5.2.0",
     "buffer": "^6.0.3",
     "deepmerge": "^4.2.2",
     "near-api-js": "^0.44.2",

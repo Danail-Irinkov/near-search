@@ -1,3 +1,4 @@
 # near contract files
 target
 Cargo.lock
+wasm*
