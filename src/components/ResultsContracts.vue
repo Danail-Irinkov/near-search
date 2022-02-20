@@ -182,6 +182,7 @@ import near_config from '../components/near_config'
 import * as nearAPI from 'near-api-js'
 import {parseContract} from 'near-contract-parser'
 import { useStore } from '../store/index'
+import * as BN from 'bn.js'
 
 export default {
 	name: 'ResultsContracts',
@@ -196,6 +197,7 @@ export default {
 			network: 'mainnet',
 			near: {},
 			wallet: {},
+			account : {},
 		}
 	},
 	setup() {
@@ -208,11 +210,7 @@ export default {
 	},
 	async mounted() {
 		console.log('mounted Start 2', window.API_URL)
-		let options = near_config('mainnet')
-		
-		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
-		
-		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});		
+
 		// TODO: if not logged in with NEAR ask user to requestSigning for him
 		
 	},
@@ -234,7 +232,7 @@ export default {
 			this.store.resultsContracts[index].methods[method].is_opened = !this.store.resultsContracts[index].methods[method].is_opened
 			
 		},
-		callMethod(index, method) {
+		async callMethod(index, method) {
 			// let contract_id = this.store.resultsContracts[index].account_id
 			// console.log('Calling a method', contract_id, method)
 			this.store.updateContract(this.store.resultsContracts[index])
@@ -243,19 +241,54 @@ export default {
 			// TODO: do the calling method flow
 			const contract = this.store.resultsContracts[index];
 			const contract_arguments = contract.methods[method].arguments;
-			const contract_deposit   = contract.methods[method].deposit;
-			const contract_function  = contract.methods[method].function;
+			let   contract_deposit   = contract.methods[method].deposit;
+			const contract_function  = contract.methods[method].name;
 			const contract_id 		 = contract.account_id;
 
-			console.log("heasd");
+			console.log(contract_deposit);
 
-			console.log('contract_arguments', contract_arguments);
-			console.log('contract_deposit', contract_deposit);
-			console.log('contract_function', contract_function);
-			console.log('contract_id', contract_id);
-			console.log('method', method);
+			const TAX = new BN.BN("10000000000000000000000", 10);
+			if (contract_deposit && contract_deposit > 0) {				
+				contract_deposit = TAX.add(new BN.BN(nearAPI.utils.format.parseNearAmount(contract_deposit), 10)).toString(10);
+			}
 
-			// const contract = new nearAPI.Contract()
+			let options = near_config('mainnet');
+			let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
+			
+			this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
+			this.wallet = new nearAPI.WalletConnection(this.near);	
+
+			if(!this.wallet.isSignedIn()) {
+				this.wallet.requestSignIn(
+					"srch.near", // contract requesting access
+					"Search Near", // optional
+					window.location.href, // optional
+					window.location.href // optional
+				);
+			}
+
+			const near_cont = new nearAPI.Contract(
+				this.wallet.account(),
+				"srch.near", 
+				{
+					viewMethods: [],
+					changeMethods: ["call_contract"],
+					sender: this.wallet.account(),
+				}
+			);
+
+			let result;
+			// try {
+				result = await near_cont.call_contract(
+					{account_id: contract_id, method_name: contract_function, args: contract_arguments},
+					// nearAPI.DEFAULT_FUNCTION_CALL_GAS,
+					"300000000000000",
+					contract_deposit,
+				);
+			// } catch (e) {
+			// 	console.log('Error calling contract', e);
+			// }
+			console.log("Contract result: ", result);
 		},
 		async fetchContract(contract){
 			try {
