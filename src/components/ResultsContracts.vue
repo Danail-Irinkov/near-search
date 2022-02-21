@@ -208,6 +208,12 @@ export default {
 			statsGalleryLogo
 		};
 	},
+	async created() {
+		if(this.$route.query.transactionHashes) {
+			console.log('this.$route.query.transactionHashes', this.$route.query.transactionHashes)
+			// TODO: Add code to get function result and logs when with deposit
+		}
+	},
 	async mounted() {
 		let options = near_config('mainnet');
 		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
