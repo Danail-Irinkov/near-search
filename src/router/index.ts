@@ -1,21 +1,12 @@
-import {createRouter, createWebHistory} from "vue-router";
-import Home from "../views/Home.vue";
-import About from "../views/About.vue";
+import {createRouter, createWebHistory} from "vue-router"
+// @ts-ignore
+import { setupLayouts } from 'virtual:generated-layouts'
+// @ts-ignore
+import generatedRoutes from 'virtual:generated-pages'
 
-const routes = [
-  {
-    path: "/",
-    component: Home,
-    name: "home",
-  },
-  {
-    path: "/about",
-    component: About,
-    name: "about",
-  },
-];
-
+const routerHistory = createWebHistory()
+const routes = setupLayouts(generatedRoutes)
 export const router = createRouter({
-  history: createWebHistory(),
-  routes,
-});
+	history: routerHistory,
+	routes
+})

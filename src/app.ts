@@ -17,10 +17,10 @@ if (window) {
 	window.Buffer = Buffer
 
 	// @ts-ignore
-	window.API_URL = 'http://localhost:5001/near-search-3807d/europe-west3'
-
-	// @ts-ignore
-	if (process.env.NODE_ENV === 'production'){
+	if (process.env.LOCAL_API){
+		// @ts-ignore
+		window.API_URL = 'http://localhost:5001/near-search-3807d/europe-west3'
+	} else {
 		// @ts-ignore
 		window.API_URL = 'https://europe-west3-near-search-3807d.cloudfunctions.net'
 	}

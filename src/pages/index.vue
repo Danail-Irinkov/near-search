@@ -1,5 +1,5 @@
 <template>
-	<div class="header" id="wikiApp">
+	<div class="header" id="searchNEAR">
 		<Head>
 			<title>NEAR Search</title>
 			<meta name="description" content="Search the NEAR Network for Contracts and review their methods" />

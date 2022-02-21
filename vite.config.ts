@@ -3,16 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import WindiCSS from 'vite-plugin-windicss'
 
-console.log('import.meta.env.LOCAL_API', process.env.LOCAL_API)
-let VITE_ENV: any = {}
-VITE_ENV["API_URL"] = JSON.stringify("https://europe-west3-near-search-3807d.cloudfunctions.net") // prod
-
-if (process.env.LOCAL_API) {
-	VITE_ENV["API_URL"] = JSON.stringify("http://localhost:5001/near-search-3807d/europe-west3") // dev
-}
-
-console.log('VITE_ENV', VITE_ENV)
-console.log('process.env.NODE_ENV', process.env.NODE_ENV)
+import Pages from 'vite-plugin-pages'
+import Layouts from 'vite-plugin-vue-layouts'
+import pluginRewriteAll from 'vite-plugin-rewrite-all';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -25,12 +18,19 @@ export default defineConfig({
 	publicDir: 'src/public',
 	plugins: [
 		vue(),
-		WindiCSS()
+		WindiCSS(),
+		Pages({
+			exclude: ['**/components/*.vue']
+		}),
+		Layouts({
+			layoutsDirs: 'src/layouts',
+			defaultLayout: 'default'
+		}),
+		pluginRewriteAll() // allows '.' inside url params
 	],
 	optimizeDeps: {
 		exclude: ['node-sdk-js'] // <= The libraries that need shimming should be excluded from dependency optimization.
 	},
-	define: VITE_ENV,
 	server: {
 		open: '/',
 	}

@@ -42,8 +42,19 @@ export default {
 				this.isSearching = true;
 				let res = await this.axios.post(window.API_URL+'/queryIndexer', { query: this.searchQuery })
 				console.timeEnd('queryPool')
+				
 				console.log('queryPool res', res.data.contracts)
 				this.contracts = [...res.data.contracts]
+				
+				if (!res?.data?.contracts?.length && this.searchQuery.indexOf('.near') !== -1) {
+					this.contracts = [{
+						account_id: String(this.searchQuery),
+						hits: 0,
+						avg_deposit: 0,
+						total_deposits: 0,
+						is_opened: true
+					}]
+				}
 				
 				this.updateContractsFromLocalStorage()
 				

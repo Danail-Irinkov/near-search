@@ -1,5 +1,5 @@
 <template>
-	<div class="contracts pl-8" v-show="store.showContracts">
+	<div class="contracts pl-8" v-show="store.showContracts && store.resultsContracts && store.resultsContracts.length">
 		<div class="row">
 			<div class="row">
 				<div class="transition-all col-span-8">
@@ -121,11 +121,11 @@
 								</div>
 								<div class="grid grid-cols-12 col-span-9">
 									<div class="grid grid-cols-12 col-span-12" v-if="store.resultsContracts[index].methods[method].logs">
-										<div class="col-span-2 inline-grid justify-center">
-											<fa-icon icon="clipboard-list" class="self-center"/>
-										</div>
-										<div class="col-span-10 relative">
-											<textarea-auto class="m-0 p-2"
+<!--										<div class="col-span-2 inline-grid justify-center">-->
+<!--											<fa-icon icon="clipboard-list" class="self-center"/>-->
+<!--										</div>-->
+										<div class="col-span-12 relative">
+											<textarea-auto class="m-0 p-2 text-sm"
 																		 :value="store.resultsContracts[index].methods[method].logs"
 																		 disabled>
 											</textarea-auto>
@@ -136,10 +136,10 @@
 									</div>
 									
 									<div class="grid grid-cols-12 col-span-12" v-if="store.resultsContracts[index].methods[method].result">
-										<div class="col-span-2 inline-grid justify-center">
-											<fa-icon icon="receipt" class="self-center"/>
-										</div>
-										<div class="col-span-10 relative">
+<!--										<div class="col-span-2 inline-grid justify-center">-->
+<!--											<fa-icon icon="receipt" class="self-center"/>-->
+<!--										</div>-->
+										<div class="col-span-12 relative">
 											<textarea-auto class="m-0 p-2"
 																		 :value="store.resultsContracts[index].methods[method].result"
 																		 disabled
@@ -209,8 +209,12 @@ export default {
 		};
 	},
 	async mounted() {
-		console.log('mounted Start 2', window.API_URL)
-
+		let options = near_config('mainnet');
+		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
+		
+		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
+		this.wallet = new nearAPI.WalletConnection(this.near);
+		
 		// TODO: if not logged in with NEAR ask user to requestSigning for him
 		
 	},
@@ -233,70 +237,85 @@ export default {
 			
 		},
 		async callMethod(index, method) {
-
-			window.process = { env: {}};
-
-			// let contract_id = this.store.resultsContracts[index].account_id
-			// console.log('Calling a method', contract_id, method)
-			this.store.updateContract(this.store.resultsContracts[index])
-			this.store.resultsContracts[index].methods[method].is_in_call = !this.store.resultsContracts[index].methods[method].is_in_call
-			
-			// TODO: do the calling method flow
-			const contract = this.store.resultsContracts[index];
-			const contract_arguments = contract.methods[method].arguments;
-			let   contract_deposit   = contract.methods[method].deposit;
-			const contract_function  = contract.methods[method].name;
-			const contract_id 		 = contract.account_id;
-
-			console.log(contract_deposit);
-
-			const TAX = new BN.BN("10000000000000000000000", 10);
-			if (contract_deposit && contract_deposit > 0) {
-				contract_deposit = TAX.add(new BN.BN(nearAPI.utils.format.parseNearAmount(contract_deposit), 10)).toString(10);
-			}
-
-			let options = near_config('mainnet');
-			let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
-			
-			this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
-			this.wallet = new nearAPI.WalletConnection(this.near);
-
-			if(!this.wallet.isSignedIn()) {
-				return this.wallet.requestSignIn(
-					"srch.near", // contract requesting access
-					"Search Near", // optional
-					window.location.href, // optional
-					window.location.href // optional
-				);
-			}
-
-			const near_cont = new nearAPI.Contract(
-				this.wallet.account(),
-				"srch.near",
-				{
-					viewMethods: [],
-					changeMethods: ["call_contract"],
-					sender: this.wallet.account(),
+			try {
+				const contract = this.store.resultsContracts[index]
+				
+				if (contract.methods[method].is_in_call) {
+					contract.methods[method].is_in_call = false
+					return
 				}
-			);
-
-			let result;
-			// try {
-				result = await near_cont.call_contract(
-					{account_id: contract_id, method_name: contract_function, args: contract_arguments},
-					// nearAPI.DEFAULT_FUNCTION_CALL_GAS,
-					"300000000000000",
-					contract_deposit,
+				
+				delete contract.methods[method].logs
+				delete contract.methods[method].result
+				contract.methods[method].is_in_call = true
+				this.store.updateContract(contract) // Not sure if needed /Dan
+				
+				let   contract_deposit   = contract.methods[method].deposit
+				const contract_arguments = contract.methods[method].arguments
+				const contract_function  = contract.methods[method].name
+				const contract_id 		 	 = contract.account_id
+				
+				const TAX = new BN.BN("10000000000000000000000", 10);
+				if (contract_deposit && contract_deposit > 0) {
+					contract_deposit = TAX.add(new BN.BN(nearAPI.utils.format.parseNearAmount(contract_deposit), 10)).toString(10);
+				}
+	
+				if(!this.wallet.isSignedIn()) {
+					contract.methods[method].is_in_call = false;
+					return this.wallet.requestSignIn(
+						"srch.near", // contract requesting access
+						"Search Near", // optional
+						window.location.href, // optional
+						window.location.href // optional
+					);
+				}
+	
+				const near_cont = new nearAPI.Contract(
+					this.wallet.account(),
+					"srch.near",
+					{
+						viewMethods: [],
+						changeMethods: ["call_contract"],
+						sender: this.wallet.account(),
+					}
 				);
-			// } catch (e) {
-			// 	console.log('Error calling contract', e);
-			// }
-			console.log("Contract result: ", result);
-			contract.methods[method].name = result
+				
+				// Capturing Logs from 'near-api-js'
+				console.stdlog = console.log.bind(console);
+				let logs = [];
+				console.log = function(){
+					logs.push(...Array.from(arguments));
+					console.stdlog.apply(console, arguments);
+				}
+				let result = await near_cont.call_contract(
+						{account_id: contract_id, method_name: contract_function, args: contract_arguments},
+						"300000000000000",
+						contract_deposit,
+					);
+				console.log = console.stdlog.bind(console);
+				// console.log("Contract logs: ", logs)
+				// Capturing Logs from 'near-api-js' - END console.log restored
+				
+				let logs_str = ''
+				logs.map((log, index)=>{
+					logs_str += log.replace('\tLog [srch.near]: ', `Log: `)+'\n'
+				})
+				contract.methods[method].logs = logs_str
+				
+				// console.log("Contract result: ", result)
+				contract.methods[method].result = JSON.stringify(result, null, 2)
+				contract.methods[method].is_in_call = false
+				
+				this.store.updateContract(contract) // Not sure if needed /Dan
+				
+			} catch (e) {
+				console.error('callMethod err: ', e)
+				return Promise.reject(e)
+			}
 		},
 		async fetchContract(contract){
 			try {
-				console.log('fetchContract Start')
+				// console.log('fetchContract Start')
 				contract.parsingContract = true
 				let parsed_contract
 				if (!contract.methods) {
@@ -305,16 +324,16 @@ export default {
 						finality: 'final',
 						request_type: 'view_code',
 					});
-					console.log('fetchContract Start 2')
+					// console.log('fetchContract Start 2')
 					parsed_contract = await parseContract(code_base64)
-					console.log('fetchContract parsed_contract', parsed_contract)
+					// console.log('fetchContract parsed_contract', parsed_contract)
 					contract.byMethod = parsed_contract.byMethod
 					
-					console.log('fetchContract contract', contract)
+					// console.log('fetchContract contract', contract)
 					if(!contract.methods)
 						contract.methods = {}
 					
-					for (let method of parsed_contract.methodNames) {
+					for (let method of this.removeDuplicatedMethods(parsed_contract.methodNames)) {
 						if(method && !contract.methods[method])
 							contract.methods[method] = {
 								name: method,
@@ -341,7 +360,19 @@ export default {
 				return Promise.reject(e)
 			}
 		},
-	}
+		removeDuplicatedMethods(methods) { //For some reason Contract parser returns each method twice, I am removing the snake case ones
+			let filtered_methods = []
+			
+			for (let method of methods) {
+				let snake_case_method = method.replace(/[A-Z]/g, (letter, index) => { return index === 0 ? letter.toLowerCase() : '_'+ letter.toLowerCase();});
+				let camel_case_method = method.toLowerCase().replace(/[-_][a-z]/g, (group) => group.slice(-1).toUpperCase());
+				if (!filtered_methods.includes(method) && !filtered_methods.includes(snake_case_method) && !filtered_methods.includes(camel_case_method))
+					filtered_methods.push(method)
+			}
+			return filtered_methods
+		}
+	
+}
 }
 </script>
 <style lang="scss">

@@ -46,7 +46,7 @@ export const useStore = defineStore({
 			return contract
 		},
 		updateContract(contract: Contract) {
-			console.log('updateContract', contract)
+			// console.log('updateContract', contract)
 			let index = this.contracts.findIndex((c: Contract)=> c.account_id === contract.account_id)
 			if(index === -1)
 				this.contracts.push(contract);

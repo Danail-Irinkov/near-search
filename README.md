@@ -29,3 +29,7 @@ npm run build
 
 ### To Do
 - webpack 5
+- Add feature to suggest method arguments
+- Add Notifications for Errors (call method error)
+- Add return money if method call fails
+- Create Super mode (search in news, social posts, Network stats)
