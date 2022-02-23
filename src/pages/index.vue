@@ -6,7 +6,8 @@
 		</Head>
 		
 		<!--		// BODY    -->
-		<img :src="SearchNearLogo" alt="Search NEAR Logo" class="mb-16" />
+		<img :src="SearchNearLogo" alt="Search NEAR Logo" class="mb-16 cursor-pointer"
+				 @click="redirectHome()" />
 		<SearchBar />
 		
 		<expand-height-transition>
@@ -38,7 +39,10 @@ export default {
 		return {
 		}
 	},
-	filters: {
+	methods: {
+		redirectHome(){
+			window.location.replace('https://searchnear.net')
+		}
 	}
 }
 </script>

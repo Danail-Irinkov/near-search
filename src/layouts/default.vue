@@ -18,7 +18,6 @@ html {
 	width: 100%;
 	height: 100%;
 	background: val($c-white);
-	font-family: 'Source Sans Pro', sans-serif;
 }
 a {
 	color: #333;

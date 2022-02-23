@@ -23,6 +23,7 @@
 			<div class="row"
 					 v-for="(contract, index) in store.resultsContracts">
 				<div class="link transition-all col-span-8"
+						 style="color: #555"
 						 @click="fetchContract(contract)">
 					<h3 class="text-headline text-left" :style="{ 'font-size': calcFontSize(contract.account_id.length) }">
 						{{ contract.account_id }}
@@ -73,7 +74,7 @@
 						<div class="text-left w-full"
 								 @click="toggleMethod(index, method)">
 							<fa-icon class="method-chevron ml-4"
-											 :class="{ 'rotate-chevron-down': isContractMethodOpened}"
+											 :class="{ 'rotate-chevron-down': isContractMethodOpened(index, method)}"
 											 icon="chevron-right"/>
 							<div class="method ml-4 pointer text-lg" :class="{ 'font-medium': contract?.method_hints[method]?.total_hits }">
 								{{ method }}
@@ -244,7 +245,7 @@ export default {
 		isContractMethodOpened(index, method) {
 			return this.store.resultsContracts[index]?.methods[method]?.is_opened
 		},
-		isContractMethodInCall(index, method) {
+		isContractMethodInCall(index, method){
 			return this.store.resultsContracts[index]?.methods[method]?.is_in_call
 		},
 		toggleMethod(index, method) {

@@ -19,7 +19,7 @@ export default defineComponent({
 <style lang="scss">
 @import "./assets/tooltip.scss";
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'SF-Pro-Rounded', 'Segoe UI', Arial, 'Karla', serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -30,7 +30,8 @@ export default defineComponent({
 	max-width: fit-content;
 }
 .link {
-	@apply no-underline hover:underline cursor-pointer
+	@apply no-underline hover:underline cursor-pointer;
+	color: #1e4ed5;
 }
 
 .row {
