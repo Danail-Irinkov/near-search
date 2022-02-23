@@ -33,12 +33,30 @@ describe('NEAR Search Tests', () => {
 	});
 
 	describe('Searching for "near"', () => {
-		it('returns a list', async () => {
+		// it('returns a list', async () => {
+		// 	try {
+		// 		let res = await testHTTPFunction(myFunctions, 'queryIndexer',
+		// 			{
+		// 				body: {
+		// 					query: 'nft'
+		// 				}
+		// 			}
+		// 		)
+		// 		// console.warn('Searching for "near"', res)
+		// 		// assert.isTrue(!!(res.contracts))
+		// 		assert.isTrue(true)
+		//
+		// 	}catch (e) {
+		// 		return Promise.reject(e)
+		// 	}
+		// })
+		it('returns a method hints', async () => {
 			try {
-				let res = await testHTTPFunction(myFunctions, 'queryIndexer',
+				let res = await testHTTPFunction(myFunctions, 'getMethodHints',
 					{
 						body: {
-							query: 'nft'
+							contract: 'srch.near',
+							method: 'call_contract'
 						}
 					}
 				)

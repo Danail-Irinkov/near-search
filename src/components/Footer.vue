@@ -14,11 +14,12 @@ export default {
 
 <style scoped>
 .footer {
-	@apply pb-4 pt-1 bg-white;
+	@apply pb-2 pt-1 bg-white;
 	width: 100%;
-	height: calc(1.25rem + 20px);
+	height: calc(1.25rem + 14px);
 	position: fixed;
 	bottom: 0;
+	opacity: 0.7;
 }
 .link {
 	margin: 1rem;

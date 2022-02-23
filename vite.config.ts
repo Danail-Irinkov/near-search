@@ -31,6 +31,7 @@ export default defineConfig({
 	optimizeDeps: {
 		exclude: ['node-sdk-js'] // <= The libraries that need shimming should be excluded from dependency optimization.
 	},
+	define: { VITE_LOCAL_API: !!process.env.VITE_LOCAL_API },
 	server: {
 		open: '/',
 	}

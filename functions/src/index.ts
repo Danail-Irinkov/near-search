@@ -35,14 +35,25 @@ export const queryIndexer = functions.region('europe-west3').https.onRequest((re
 	cors(req, res, async () => {
 		try {
 			fl.log("queryIndexer input", req.body);
-			let word = String(req.body.query).split(' ')[0]
+			let query = String(req.body.query).replace(' ', '*')
 			let contracts = []
 
 			let result: any = await SearchRecordsByQuery('receipts2', {
 				query: {
-					query_string: {
-						query: `*${word}*`,
-						fields: ["receiver_id", "method"]
+					bool: {
+						must: [
+							{
+								query_string: {
+									query: `*${query}*`,
+									fields: ['receiver_id', 'method']
+								},
+							},
+							{
+								range: {
+									block: { gte: getBlockHeightByDaysAgo(28) }
+								}
+							}
+						]
 					}
 				},
 				size: 0,
@@ -59,9 +70,10 @@ export const queryIndexer = functions.region('europe-west3').https.onRequest((re
 					}
 				}
 			})
-			console.log("queryIndexer result", result.body.hits.hits.length)
-			console.log("queryIndexer aggregations", result.body.aggregations.accounts.buckets[0])
-			console.log("queryIndexer aggregations.length", result.body.aggregations.accounts.buckets.length)
+			// console.log("queryIndexer results", result.body.hits.hits.length)
+			// console.log("queryIndexer result", result.body.hits.hits[0])
+			// console.log("queryIndexer aggregations", result.body.aggregations.accounts.buckets[0])
+			// console.log("queryIndexer aggregations.length", result.body.aggregations.accounts.buckets.length)
 
 			for (let agg of result.body.aggregations.accounts.buckets) {
 				contracts.push({
@@ -76,6 +88,87 @@ export const queryIndexer = functions.region('europe-west3').https.onRequest((re
 			return { contracts }
 		}catch (e) {
 			fl.error("queryIndexer Error", e)
+			res.status(502).send("Server Error")
+			return Promise.reject(e)
+		}
+	})
+});
+
+export const getMethodHints = functions.region('europe-west3').https.onRequest((req, res) => {
+	cors(req, res, async () => {
+		try {
+			fl.log("getMethodHints input", req.body);
+			let contract = String(req.body.contract)
+			// let method = String(req.body.method)
+			let method_hints: any = {}
+
+			let result: any = await SearchRecordsByQuery('receipts2', {
+				query: {
+					bool: {
+						must: [
+							{
+								match: {
+									receiver_id: contract,
+								},
+							},
+							{
+								range: {
+									block: { gte: getBlockHeightByDaysAgo(28) }
+								}
+							}
+						]
+					}
+				},
+				size: 10000,
+			})
+
+			let total_hits = result.body.hits.hits.length
+			console.log("queryIndexer result", result.body.hits.hits[0])
+
+			// Merging all method call results to an aggregation of its arguments usage
+			for (let hit of result.body.hits.hits) {
+				let receipt = hit._source
+				if (!method_hints[receipt.method]) {
+					method_hints[receipt.method] = {
+						total_hits: 0,
+						total_deposits: 0,
+						avg_deposit: 0,
+					}
+				}
+				method_hints[receipt.method].total_hits += 1
+				method_hints[receipt.method].total_deposits += receipt.deposit_near
+
+				for (let argument in receipt.arg_types) {
+					if (!method_hints[receipt.method][argument]) {
+						method_hints[receipt.method][argument] = {
+							type: [receipt.arg_types[argument]],
+							used_count: 1
+						}
+					} else {
+						method_hints[receipt.method][argument].used_count++
+						if (method_hints[receipt.method][argument].type.indexOf(receipt.arg_types[argument]) === -1)
+							method_hints[receipt.method][argument].type.push(receipt.arg_types[argument])
+					}
+				}
+			}
+
+			// Adding used_percent for each argument
+			for (let key in method_hints) {
+				let method = method_hints[key]
+				method.avg_deposit = method.total_deposits/method.total_hits
+				for (let key in method) {
+					if (typeof method[key] === 'object'){
+						method[key].used_percent = method[key].used_count/method.total_hits
+					}
+				}
+			}
+			console.log('getMethodHits total_hits', total_hits)
+			console.log('getMethodHits method_hints', method_hints)
+
+			res.send({ method_hints })
+			return { method_hints }
+		}catch (e) {
+			fl.error("getMethodHits Error", e)
 			res.status(502).send("Server Error")
 			return Promise.reject(e)
 		}
@@ -163,4 +256,18 @@ export const updateIndex = functions.region('europe-west3').runWith({ memory: '5
 	return new Promise(resolve => {
 		setTimeout(resolve, ms)
 	})
+}
+
+function getBlockHeightByDaysAgo(days_ago: number) {
+	let referenceBlock = {
+		timestamp: 1645589047,
+		height: 60077923,
+	}
+
+	let seconds_ago = days_ago * 24 * 60 * 60
+	let timestamp_now = new Date().getTime()/1000
+	let height = Math.round(referenceBlock.height + (timestamp_now - seconds_ago - referenceBlock.timestamp) / 1.266)
+
+	console.log('requested Height', height)
+	return height
 }

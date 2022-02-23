@@ -32,7 +32,7 @@
 					</h3>
 				</div>
 				<div class="col-span-2">
-					<h3 class="text-headline text-center justify-center transition-all"
+					<h3 class="text-headline text-center justify-center transition-all flex-row"
 							:class="{	'text-slate-800': abbreviateNumber(contract.total_deposits).indexOf('M') !== -1 }">
 						<span :class="{
 							'font-semibold': abbreviateNumber(contract.total_deposits).indexOf('K') !== -1,
@@ -75,42 +75,52 @@
 							<fa-icon class="method-chevron ml-4"
 											 :class="{ 'rotate-chevron-down': isContractMethodOpened}"
 											 icon="chevron-right"/>
-							<div class="method ml-4 pointer text-lg">
+							<div class="method ml-4 pointer text-lg" :class="{ 'font-medium': contract?.method_hints[method]?.total_hits }">
 								{{ method }}
+								<span class="text-md font-light">
+									{{ contract?.method_hints[method] ? '('+ contract.method_hints[method].total_hits +')' : '' }}
+								</span>
 							</div>
 						</div>
 						<expand-height-transition class="col-span-12">
 							<div class="row text-left pl-8 pointer" style="min-height: 24px"
 									 v-if="isContractMethodOpened(index, method)">
-								<div class="method-inputs col-span-9 grid grid-cols-12">
-									<div class="col-span-2 text-center">
+								<div class="method-inputs col-span-10 grid grid-cols-12">
+									<div class="col-span-1 text-center">
 										<fa-icon icon="list-ul" class="align-bottom mt-3"/>
 									</div>
-									<div class="col-span-10 relative">
-										<input
-											v-model="store.resultsContracts[index].methods[method].arguments"
+									<div class="col-span-11 relative">
+										<textarea-auto
+											:v-model="store.resultsContracts[index].methods[method].arguments"
+											:value="getArgumentsPlaceholder(contract.method_hints[method])"
 											type="text"
 											class="m-0 p-2"
 										/>
 										<span class="absolute" style="right: -7px; top: 15px; font-size: 12px;">
-													{JSON}
-												</span>
+											{JSON}
+										</span>
 									</div>
-									<div class="col-span-2 text-center">
+									<div class="col-span-1 text-center">
 										<fa-icon icon="hand-holding-usd" class="align-bottom mt-3"/>
 									</div>
-									<div class="col-span-10 relative">
+									<div class="col-span-11 relative">
 										<input
 											v-model="store.resultsContracts[index].methods[method].deposit"
 											type="text"
 											class="m-0 mb-4 p-2"
 										/>
-										<span class="absolute right-0" style="top: 3px; font-size: 27px;">
-													Ⓝ
-										</span>
+										<div>
+											<span class="absolute right-8" style="top: 3px; font-size: 18px;line-height: 38px"
+														v-if="contract?.method_hints[method]?.avg_deposit">
+														Avg ~ {{ Math.round(contract.method_hints[method].avg_deposit) }}
+											</span>
+											<span class="absolute right-0" style="top: 3px; font-size: 27px;">
+														Ⓝ
+											</span>
+										</div>
 									</div>
 								</div>
-								<div class="method-actions grid col-span-3 text-center justify-center items-center">
+								<div class="method-actions grid col-span-2 text-center justify-center items-center">
 									<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'Call Function'">
 										<button class="outline-0" style="font-size: 32px; transform: scale(0.8)"
 														@click="callMethod(index, method)">
@@ -196,6 +206,7 @@ export default {
 			show_hits: false,
 			network: 'mainnet',
 			near: {},
+			keyStore: {},
 			wallet: {},
 			account : {},
 		}
@@ -213,16 +224,15 @@ export default {
 			console.log('this.$route.query.transactionHashes', this.$route.query.transactionHashes)
 			// TODO: Add code to get function result and logs when with deposit
 		}
+		if(this.$route.query.errorCode) {
+			console.log('Wallet Error Message:', this.$route.query.errorCode+': '+this.$route.query.errorMessage)
+		}
+		if(this.$route.query.account_id) {
+			this.store.selected_account = this.$route.query.account_id
+		}
 	},
 	async mounted() {
-		let options = near_config('mainnet');
-		let keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
-		
-		this.near = await nearAPI.connect({ ...options, deps: { keyStore }});
-		this.wallet = new nearAPI.WalletConnection(this.near);
-		
-		// TODO: if not logged in with NEAR ask user to requestSigning for him
-		
+		await this.connectToNEARAccount()
 	},
 	methods: {
 		calcFontSize(length) {
@@ -238,12 +248,35 @@ export default {
 			return this.store.resultsContracts[index]?.methods[method]?.is_in_call
 		},
 		toggleMethod(index, method) {
-			console.log('toggleMethod', method)
 			this.store.resultsContracts[index].methods[method].is_opened = !this.store.resultsContracts[index].methods[method].is_opened
 			
 		},
+		async connectToNEARAccount() {
+			let options = near_config(this.network)
+			this.keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
+			
+			// Defaulting to first account in keystore
+			if (!this.store.selected_account) {
+				this.store.accounts = [...(await this.keyStore.getAccounts(this.network))]
+				if (this.store.accounts[0]) {
+					this.store.selected_account =  this.store.accounts[0]
+				}
+			}
+			
+			this.near = await nearAPI.connect({ ...options, deps: { keyStore: this.keyStore }})
+			this.wallet = new nearAPI.WalletConnection(this.near, `${this.network}:${this.store.selected_account}:`)
+			this.account = await this.near.account(this.store.selected_account)
+			this.store.accounts = [...(await this.keyStore.getAccounts(this.network))]
+		},
+		requestSignIn() {
+			this.wallet.requestSignIn(
+				"srch.near", // contract requesting access
+				"Search Near", // optional
+				window.location.href, // optional
+				window.location.href // optional
+			);
+		},
 		async callMethod(index, method) {
-			try {
 				const contract = this.store.resultsContracts[index]
 				
 				if (contract.methods[method].is_in_call) {
@@ -265,26 +298,30 @@ export default {
 				if (contract_deposit && contract_deposit > 0) {
 					contract_deposit = TAX.add(new BN.BN(nearAPI.utils.format.parseNearAmount(contract_deposit), 10)).toString(10);
 				}
-	
+			
+			try {
 				if(!this.wallet.isSignedIn()) {
 					contract.methods[method].is_in_call = false;
-					return this.wallet.requestSignIn(
-						"srch.near", // contract requesting access
-						"Search Near", // optional
-						window.location.href, // optional
-						window.location.href // optional
-					);
+					return this.requestSignIn()
 				}
-	
-				const near_cont = new nearAPI.Contract(
-					this.wallet.account(),
-					"srch.near",
-					{
-						viewMethods: [],
-						changeMethods: ["call_contract"],
-						sender: this.wallet.account(),
-					}
-				);
+				
+				// const near_cont = new nearAPI.Contract(
+				// 	this.wallet.account(),
+				// 	"srch.near",
+				// 	{
+				// 		viewMethods: [],
+				// 		changeMethods: ["call_contract"],
+				// 		sender: this.wallet.account(),
+				// 		meta: 'some info'
+				// 	}
+				// );
+				
+				const meta = JSON.stringify({
+					account_id: this.wallet.getAccountId(),
+					contract: contract_id,
+					method: contract_function,
+					args: contract_arguments,
+				})
 				
 				// Capturing Logs from 'near-api-js'
 				console.stdlog = console.log.bind(console);
@@ -293,11 +330,21 @@ export default {
 					logs.push(...Array.from(arguments));
 					console.stdlog.apply(console, arguments);
 				}
-				let result = await near_cont.call_contract(
-						{account_id: contract_id, method_name: contract_function, args: contract_arguments},
-						"300000000000000",
-						contract_deposit,
-					);
+				// let result = await near_cont.call_contract(
+				// 		{ account_id: contract_id, method_name: contract_function, args: contract_arguments },
+				// 		"300000000000000",
+				// 		contract_deposit,
+				// 	);
+				const result = await this.account.functionCall({
+					contractId: 'srch.near',
+					methodName: 'call_contract',
+					args: { account_id: contract_id, method_name: contract_function, args: contract_arguments },
+					gas: "300000000000000",
+					attachedDeposit: contract_deposit,
+					meta: meta,
+					walletMeta: meta,
+					walletCallbackUrl: window.location.href
+				});
 				console.log = console.stdlog.bind(console);
 				// console.log("Contract logs: ", logs)
 				// Capturing Logs from 'near-api-js' - END console.log restored
@@ -308,19 +355,29 @@ export default {
 				})
 				contract.methods[method].logs = logs_str
 				
-				// console.log("Contract result: ", result)
-				contract.methods[method].result = JSON.stringify(result, null, 2)
+				if (result.status.SuccessValue) {
+					contract.methods[method].result = JSON.stringify(JSON.parse(Buffer.from(result.status.SuccessValue, 'base64').toString(), null, 2))
+				} else {
+					console.log("Contract err result: ", result.status)
+				}
 				contract.methods[method].is_in_call = false
 				
 				this.store.updateContract(contract) // Not sure if needed /Dan
 				
 			} catch (e) {
-				console.error('callMethod err: ', e)
-				return Promise.reject(e)
+				console.error('callMethod err: ', e.toString())
+				// TODO: Add Notification
+				contract.methods[method].result = e.toString()
+				contract.methods[method].is_in_call = false
+				// return Promise.reject(e)
 			}
 		},
 		async fetchContract(contract){
 			try {
+				if (contract.show_methods) { // just collapsing details
+					return contract.show_methods = !contract.show_methods
+				}
+				
 				// console.log('fetchContract Start')
 				contract.parsingContract = true
 				let parsed_contract
@@ -345,7 +402,7 @@ export default {
 								name: method,
 								is_opened: false,
 								is_in_call: false,
-								arguments: '{}',
+								arguments: '',
 								deposit: 0,
 								logs: '',
 								result: '',
@@ -359,12 +416,57 @@ export default {
 				
 				this.store.updateContract(contract)
 				
+				await	this.fetchContractHints(contract)
+				
 				return contract
 			} catch (e) {
 				contract.parsingContract = false
 				console.error('fetchContract Error: ', e)
 				return Promise.reject(e)
 			}
+		},
+		async fetchContractHints(contract){
+			try {
+				let res = await this.axios.post(window.API_URL+'/getMethodHints',
+		 {
+						contract: contract.account_id
+					}
+				)
+				contract.method_hints = res.data.method_hints
+			} catch (e) {
+				console.error('fetchContractHints Error: ', e)
+				return Promise.reject(e)
+			}
+			
+		},
+		getArgumentsPlaceholder(method_hints = null) { //For some reason Contract parser returns each method twice, I am removing the snake case ones
+			if (!method_hints) return '{}'
+			
+			let placeholder = '{'
+			let just_hints =  Object.keys(method_hints)
+				.filter( key => typeof method_hints[key] === 'object')
+				.sort(function(a, b) {
+					// console.log('sort a', method_hints[a].used_count - method_hints[b].used_count)
+					return method_hints[b].used_count - method_hints[a].used_count;
+				})
+				.reduce( (res, key) => (res[key] = method_hints[key], res), {} );
+			
+			let length = Object.keys(just_hints).length
+			let index = 0
+			
+			for (let key in just_hints) {
+				let value = just_hints[key]
+				if (typeof value === 'object') {
+					if (index > 0 && index < length) {
+						placeholder += ','
+					}
+					placeholder += ` "${key}": "${value.used_percent < 0.8 ? '?' : ''}${value.type}"`
+					index++
+				}
+			}
+			placeholder += ' }'
+
+			return JSON.stringify(JSON.parse(placeholder), null, 2)
 		},
 		removeDuplicatedMethods(methods) { //For some reason Contract parser returns each method twice, I am removing the snake case ones
 			let filtered_methods = []
@@ -377,8 +479,29 @@ export default {
 			}
 			return filtered_methods
 		}
-	
-}
+	},
+	watch: {
+		async 'store.show_login_dropdown'(val){
+			if (val) {
+				this.store.accounts = [...(await this.keyStore.getAccounts(this.network))]
+				console.log('show_login_dropdown.store.accounts', this.store.accounts)
+			}
+		},
+		async 'store.trigger_wallet_signin'(val){
+			if (val) {
+				// await this.wallet.signOut()
+				await this.requestSignIn()
+				this.store.trigger_wallet_signin = !this.store.trigger_wallet_signin
+			}
+		},
+		async 'store.update_selected_account'(val){
+			console.log('update_selected_account', val)
+			if (val) {
+				await this.connectToNEARAccount()
+				this.store.update_selected_account = false
+			}
+		},
+	}
 }
 </script>
 <style lang="scss">
@@ -447,7 +570,6 @@ h2 {
 	//margin-bottom: 12px;
 	height: 100%;
 	letter-spacing: 0;
-	word-break: break-word;
 	display: flex;
 }
 

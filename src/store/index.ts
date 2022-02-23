@@ -11,10 +11,15 @@ export interface Contract {
 	byMethod?: object;
 }
 export interface RootState {
+	show_login_dropdown: Boolean,
+	trigger_wallet_signin: Boolean,
+	update_selected_account: Boolean,
 	show_hits: Boolean,
 	showContracts: Boolean,
 	resultsContracts: RemovableRef<Array<Contract>>,
 	contracts: RemovableRef<Array<Contract>>;
+	accounts: RemovableRef<Array<String>>;
+	selected_account: RemovableRef<String>;
 }
 
 export const useStore = defineStore({
@@ -22,10 +27,15 @@ export const useStore = defineStore({
 	state: () => {
 		// @ts-ignore
 		return {
+			show_login_dropdown: false,
+			trigger_wallet_signin: false,
+			update_selected_account: false,
 			show_hits: useStorage('show_hits', false),
 			showContracts: useStorage('showContracts', false),
 			resultsContracts: useStorage('resultsContracts', []),
-			contracts: useStorage('contracts', [])
+			contracts: useStorage('contracts', []),
+			accounts: useStorage('accounts', []),
+			selected_account: useStorage('selected_account', '')
 		} as RootState
 	},
 	getters: {
