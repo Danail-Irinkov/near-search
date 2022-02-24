@@ -12,7 +12,7 @@
       class="mb-0"
       style="white-space: pre-wrap; word-break: break-word;cursor: default"
       :style="computedStyles"
-      v-html="$autoLinkText(_value)"
+      v-html="$autoLinkText(modelValue)"
       v-bind="$attrs"
       v-on="listeners"
       :disabled="disabled"
@@ -23,7 +23,8 @@
               v-else
       class=""
       :style="computedStyles"
-      v-model="_value"
+      :value="modelValue"
+			@change="updateValue($event.target.value)"
       v-bind="$attrs"
       v-on="listeners"
       :disabled="disabled"
@@ -33,7 +34,7 @@
     </textarea>
     <div class="more-text-available" v-if="is_collapsed && contentHeight() > minHeight && !disabled && !hide_arrow">
       ...
-      <fa-icon icon="reply" class="adjust-more-icon"/>
+<!--      <fa-icon icon="reply" class="adjust-more-icon"/>-->
     </div>
   </div>
 </template>
@@ -46,7 +47,8 @@ export default {
 		}
 	},
 	props: {
-		value: {
+		modelValue: String,
+		initialValue: {
 			type: [String, Number, Event],
 			default: ''
 		},
@@ -96,6 +98,7 @@ export default {
 	},
 	data () {
 		return {
+			_val: null,
 			touched: false,
 			// focused: false,
 			// hadError: false,
@@ -105,14 +108,14 @@ export default {
 		}
 	},
 	computed: {
-		_value: {
-			get: function() {
-				return this.value
-			},
-			set: function(val) {
-				return this.updateValue(val)
-			}
-		},
+		// _value: {
+		// 	get: function() {
+		// 		return this._val || this.initialValue
+		// 	},
+		// 	set: function(val) {
+		// 		return this.updateValue(val)
+		// 	}
+		// },
 		listeners () {
 			return {
 				input: this.updateValue,
@@ -142,9 +145,9 @@ export default {
 		}
 	},
 	watch: {
-		value (val) {
-			if (val && this.always_expanded) this.resizeUp()
-		},
+		// _value (val) {
+		// 	if (val && this.always_expanded) this.resizeUp()
+		// },
 		disabled (val) {
 			if (val) this.resizeUp()
 		},
@@ -167,11 +170,11 @@ export default {
 	},
 	methods: {
 		updateValue (evt) {
-			const value = evt.target && evt.target.value ? evt.target.value : ''
+			const value = evt.target && evt.target.value ? evt.target.value : evt
 			if (!this.touched && value)
 				this.touched = true
-
-			this.$emit('input', value)
+			
+			this.$emit('update:modelValue', value)
 		},
 		onFocus (value) {
 			this.focused = true
@@ -223,10 +226,10 @@ export default {
 	created () {
 	},
 	mounted () {
-		if (this.value)
-			this.val = String(this.value)
-
-		if (this.autosize || this.always_expanded)
+		if (this.initialValue){
+			this.updateValue(this.initialValue)
+		}
+		if (this.autosize && this.always_expanded)
 			this.resizeUp()
 		 else
 			this.resizeDown()
@@ -235,9 +238,10 @@ export default {
 </script>
 <style scoped lang="scss">
   .more-text-available {
+		font-size: 22px;
     position: relative;
     right: 5px;
-    bottom: 35px;
+    bottom: 29px;
     text-align: end;
     height: 0;
     color: gainsboro;

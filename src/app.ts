@@ -33,12 +33,12 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 	faCircleNotch, faPlay, faListUl, faHandHoldingUsd, faClipboardList,
-	faFunnelDollar,
+	faFunnelDollar,	faReply,
 	faReceipt, faStopwatch, faCog } from '@fortawesome/free-solid-svg-icons'
 
 library.add(faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 	faCircleNotch, faPlay, faListUl, faHandHoldingUsd, faClipboardList,
-	faFunnelDollar,
+	faFunnelDollar,	faReply,
 	faReceipt, faStopwatch, faCog )
 
 // @ts-ignore
@@ -56,7 +56,11 @@ const openLinkNewTab = (URL = null) => {
 	if (URL)
 		window.open(URL, '_blank')
 }
-
+const sleep = (ms:number) => {
+	return new Promise(resolve => {
+		setTimeout(resolve, ms)
+	})
+}
 let app = createApp(App)
   .use(router)
   .use(createPinia())
@@ -64,6 +68,7 @@ let app = createApp(App)
 	.use(VueAxios, axios)
 	.provide('$autoLinkText', autoLinkText)
 	.provide('openLinkNewTab', openLinkNewTab)
+	.provide('sleep', sleep)
 	.component('fa-icon', FontAwesomeIcon)
 	.component('textarea-auto', TextAreaAutosize)
 	.component('expand-height-transition', ExpandHeightTransition)

@@ -76,10 +76,10 @@
 							<fa-icon class="method-chevron ml-4"
 											 :class="{ 'rotate-chevron-down': isContractMethodOpened(index, method)}"
 											 icon="chevron-right"/>
-							<div class="method ml-4 pointer text-lg" :class="{ 'font-medium': contract?.method_hints[method]?.total_hits }">
+							<div class="method ml-4 pointer text-lg" :class="{ 'font-medium': contract?.method_hints && contract.method_hints[method]?.total_hits }">
 								{{ method }}
 								<span class="text-md font-light">
-									{{ contract?.method_hints[method] ? '('+ contract.method_hints[method].total_hits +')' : '' }}
+									{{ contract?.method_hints && contract.method_hints[method] ? '('+ contract.method_hints[method].total_hits +')' : '' }}
 								</span>
 							</div>
 						</div>
@@ -92,10 +92,11 @@
 									</div>
 									<div class="col-span-11 relative">
 										<textarea-auto
-											:v-model="store.resultsContracts[index].methods[method].arguments"
-											:value="getArgumentsPlaceholder(contract.method_hints[method])"
-											type="text"
-											class="m-0 p-2"
+											:value="store.resultsContracts[index].methods[method].arguments"
+											@update:modelValue="updateStateProp($event, index, method, 'arguments')"
+											:initial-value="getArgumentsPlaceholder(contract?.method_hints && contract.method_hints[method] ? contract.method_hints[method] : null)"
+											:min-height="37"
+											class="m-0"
 										/>
 										<span class="absolute" style="right: -7px; top: 15px; font-size: 12px;">
 											{JSON}
@@ -112,7 +113,7 @@
 										/>
 										<div>
 											<span class="absolute right-8" style="top: 3px; font-size: 18px;line-height: 38px"
-														v-if="contract?.method_hints[method]?.avg_deposit">
+														v-if="contract?.method_hints && contract?.method_hints[method]?.avg_deposit">
 														Avg ~ {{ Math.round(contract.method_hints[method].avg_deposit) }}
 											</span>
 											<span class="absolute right-0" style="top: 3px; font-size: 27px;">
@@ -130,14 +131,17 @@
 										</button>
 									</div>
 								</div>
-								<div class="grid grid-cols-12 col-span-9">
+								<div class="grid grid-cols-12 col-span-10">
 									<div class="grid grid-cols-12 col-span-12" v-if="store.resultsContracts[index].methods[method].logs">
 <!--										<div class="col-span-2 inline-grid justify-center">-->
 <!--											<fa-icon icon="clipboard-list" class="self-center"/>-->
 <!--										</div>-->
 										<div class="col-span-12 relative">
 											<textarea-auto class="m-0 p-2 text-sm"
-																		 :value="store.resultsContracts[index].methods[method].logs"
+																		 :modelValue="store.resultsContracts[index].methods[method].logs"
+																		 @update:modelValue="updateStateProp($event, index, method, 'logs')"
+																		 :min-height="37"
+																		 :always_expanded="true"
 																		 disabled>
 											</textarea-auto>
 											<span class="textarea-label">
@@ -152,9 +156,12 @@
 <!--										</div>-->
 										<div class="col-span-12 relative">
 											<textarea-auto class="m-0 p-2"
-																		 :value="store.resultsContracts[index].methods[method].result"
-																		 disabled
-																		 :rows="2">
+																		 :ref="'contract_'+index+'method_'+method+'_result'"
+																		 :modelValue="store.resultsContracts[index].methods[method].result"
+																		 @update:modelValue="updateStateProp($event, index, method, 'result')"
+																		 :min-height="37"
+																		 :always_expanded="true"
+																		 disabled>
 											</textarea-auto>
 											<span class="textarea-label">
 														Result
@@ -162,7 +169,7 @@
 										</div>
 									</div>
 								</div>
-								<div class="method-actions grid col-span-3 text-center justify-center items-center">
+								<div class="method-actions grid col-span-2 text-center justify-center items-center">
 									<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'Clear Logs'">
 										<button class="outline-0" style="font-size: 24px"
 														v-if="store.resultsContracts[index].methods[method].logs"
@@ -197,11 +204,7 @@ import * as BN from 'bn.js'
 
 export default {
 	name: 'ResultsContracts',
-	inject: {
-		openLinkNewTab: {
-			from: 'openLinkNewTab'
-		}
-	},
+	inject: ['openLinkNewTab', 'sleep'],
 	data() {
 		return {
 			show_hits: false,
@@ -277,29 +280,56 @@ export default {
 				window.location.href // optional
 			);
 		},
-		async callMethod(index, method) {
-				const contract = this.store.resultsContracts[index]
-				
-				if (contract.methods[method].is_in_call) {
-					contract.methods[method].is_in_call = false
-					return
-				}
-				
-				delete contract.methods[method].logs
-				delete contract.methods[method].result
-				contract.methods[method].is_in_call = true
-				this.store.updateContract(contract) // Not sure if needed /Dan
-				
-				let   contract_deposit   = contract.methods[method].deposit
-				const contract_arguments = contract.methods[method].arguments
-				const contract_function  = contract.methods[method].name
-				const contract_id 		 	 = contract.account_id
-				
-				const TAX = new BN.BN("10000000000000000000000", 10);
-				if (contract_deposit && contract_deposit > 0) {
-					contract_deposit = TAX.add(new BN.BN(nearAPI.utils.format.parseNearAmount(contract_deposit), 10)).toString(10);
-				}
+		validateArguments(contract, method) {
+			let result = true
+			let input_JSON
+			let input = contract.methods[method].arguments
+			let hints = this.getArgumentsPlaceholder(contract?.method_hints && contract.method_hints[method] ? contract.method_hints[method] : null)
 			
+			try {
+				input_JSON = JSON.parse(input)
+			} catch (e) {
+				console.log('JSON.parse err: ', e)
+				return 'Please correct your JSON syntax'
+			}
+			
+			if (input !== '{}' && input === hints)
+				result = 'Please modify the arguments before executing'
+			
+			return result
+		},
+		async callMethod(index, method) {
+			const contract = this.store.resultsContracts[index]
+			
+			if (contract.methods[method].is_in_call) {
+				contract.methods[method].is_in_call = false
+				return
+			}
+			
+			let argument_validation = this.validateArguments(contract, method)
+			if(argument_validation !== true) {
+				contract.methods[method].result = argument_validation
+				this.$refs['contract_'+index+'method_'+method+'_result'][0].$el.classList.add('glow')
+				await this.sleep(650)
+				this.$refs['contract_'+index+'method_'+method+'_result'][0].$el.classList.remove('glow')
+				return
+			}
+			
+			delete contract.methods[method].logs
+			delete contract.methods[method].result
+			contract.methods[method].is_in_call = true
+			this.store.updateContract(contract) // Not sure if needed /Dan
+			
+			let   contract_deposit   = contract.methods[method].deposit
+			const contract_arguments = contract.methods[method].arguments
+			const contract_function  = contract.methods[method].name
+			const contract_id 		 	 = contract.account_id
+			
+			const TAX = new BN.BN("10000000000000000000000", 10);
+			if (contract_deposit && contract_deposit > 0) {
+				contract_deposit = TAX.add(new BN.BN(nearAPI.utils.format.parseNearAmount(contract_deposit), 10)).toString(10);
+			}
+		
 			try {
 				if(!this.wallet.isSignedIn()) {
 					contract.methods[method].is_in_call = false;
@@ -439,6 +469,9 @@ export default {
 				return Promise.reject(e)
 			}
 			
+		},
+		updateStateProp($event, index, method, prop){
+			this.store.resultsContracts[index].methods[method][prop] = $event
 		},
 		getArgumentsPlaceholder(method_hints = null) { //For some reason Contract parser returns each method twice, I am removing the snake case ones
 			if (!method_hints) return '{}'

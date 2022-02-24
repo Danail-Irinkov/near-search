@@ -43,7 +43,7 @@ export default {
 				let res = await this.axios.post(window.API_URL+'/queryIndexer', { query: this.searchQuery })
 				console.timeEnd('queryPool')
 				
-				console.log('queryPool res', res.data.contracts)
+				// console.log('queryPool res', res.data.contracts)
 				this.contracts = [...res.data.contracts]
 				
 				if (!res?.data?.contracts?.length && this.searchQuery.indexOf('.near') !== -1) {
@@ -74,9 +74,7 @@ export default {
 			for (let key in this.contracts) {
 				let contract = this.contracts[key]
 				let stored_index = stored_contracts.findIndex((c)=> c.account_id === contract.account_id)
-				console.log('stored_contracts', stored_contracts[stored_index])
 				if(stored_index !== -1) {
-					console.log('stored_contracts merged', deepmerge(contract, stored_contracts[stored_index]))
 					this.contracts[key] = deepmerge(contract, stored_contracts[stored_index])
 				}
 			}
