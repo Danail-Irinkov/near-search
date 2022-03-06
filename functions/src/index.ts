@@ -2,13 +2,14 @@ import * as path from 'path'
 import * as functions from "firebase-functions";
 // import pg from "./pg";
 import near from "./near";
+import * as kucoin from "./kucoin";
 import * as fs from "fs";
 import { initializeApp, cert } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
-import {	addRecordsToIndex,	SearchRecordsByQuery } from "./elastic";
+import { addRecordsToIndex, SearchRecordsByQuery } from "./elastic";
 // @ts-ignore
 // import { createScript, reindexFlow, parseDepositNearFields } from "./elastic";
-
+import { Candle } from "../types";
 
 const firebaseConfig: any = {
 	apiKey: "AIzaSyDfiXN-vr9aoexpFKBumbyVjGYCEl3REkE",
@@ -250,6 +251,91 @@ export const updateIndex = functions.region('europe-west3').runWith({ memory: '5
 		// res.status(502).send('Error')
 		return Promise.reject(e)
 	}
+});
+
+// export const updateCandlesIndex = functions.https.onRequest(async (req, res): Promise<any> => {
+export const updateCandlesIndex = functions.region('europe-west3').runWith({ memory: '512MB' }).pubsub.schedule('5 * * * *').timeZone('EET').onRun(async (context): Promise<any> => {
+	try {
+		fl.log('updateCandlesIndex Start')
+		const tickers = await kucoin.getAllTickers()
+		// console.log('updateCandlesIndex tickers', tickers.data)
+		let promises: Promise<Candle>[] = []
+		let last_candle_timestamp = (await db.collection('state').doc('updateIndex').get()).data()?.last_candle_timestamp || 0
+		let now_timestamp = new Date().getTime()/1000
+		let factor = 1.30
+
+		for (let ticker of tickers.data.ticker) {
+			if (ticker && parseFloat(ticker.volValue) > 10) {
+				let low_benchmark = parseFloat(ticker.averagePrice)/factor
+				let high_benchmark = parseFloat(ticker.averagePrice)*factor
+				if (parseFloat(ticker.high) > high_benchmark || parseFloat(ticker.low) < low_benchmark) {
+					// console.log('updateCandlesIndex symbol', ticker.symbol)
+					promises.push(kucoin.findCrazyCandles(ticker, '1hour', last_candle_timestamp))
+				}
+			}
+
+		}
+
+		let candles: Candle[] = (await Promise.all(promises)).flat()
+		console.log('updateCandlesIndex candles', candles.length)
+
+		if (candles.length)
+			await addRecordsToIndex(candles, 'candles')
+
+		await db.collection('state').doc('updateIndex').set({ last_candle_timestamp: now_timestamp})
+		// res.send({candles})
+		return candles
+	} catch (e) {
+		fl.error('updateIndex Error', e);
+		// res.status(502).send('Error')
+		return Promise.reject(e)
+	}
+});
+
+export const queryCandlesIndexer = functions.region('europe-west3').https.onRequest((req, res) => {
+	cors(req, res, async () => {
+		try {
+			fl.log("queryCandlesIndexer input", req.body);
+			let query = String(req.body.query).replace(' ', '*')
+
+			let date = new Date();
+			date.setDate(date.getDate()-7);
+
+			let result: any = await SearchRecordsByQuery('candles', {
+				sort : [
+					{ crazy_score: 'desc' },
+				],
+				query: {
+					bool: {
+						must: [
+							{
+								query_string: {
+									query: `*${query}*`,
+									fields: ['symbol']
+								},
+							},
+							{
+								range: {
+									time: { gte: date.getTime()/1000 }
+								}
+							}
+						]
+					}
+				},
+				size: 100,
+			})
+			console.log("queryCandlesIndexer results", result.body.hits.hits.length)
+
+			let candles = result.body.hits.hits.map((el: any) => el._source)
+
+			res.send({ candles })
+			return { candles }
+		}catch (e) {
+			fl.error("queryIndexer Error", e)
+			res.status(502).send("Server Error")
+			return Promise.reject(e)
+		}
+	})
 });
 
 (global as any).sleep = async function(ms:number) {

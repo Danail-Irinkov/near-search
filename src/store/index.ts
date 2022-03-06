@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { useStorage, RemovableRef } from '@vueuse/core'
+import { Candle } from "../../functions/src/types";
 
 export interface Contract {
 	account_id: string;
@@ -17,6 +18,8 @@ export interface RootState {
 	show_hits: Boolean,
 	showContracts: Boolean,
 	resultsContracts: RemovableRef<Array<Contract>>,
+	showCandles: Boolean,
+	resultsCandles: RemovableRef<Array<Candle>>,
 	contracts: RemovableRef<Array<Contract>>;
 	accounts: RemovableRef<Array<String>>;
 	selected_account: RemovableRef<String>;
@@ -33,6 +36,8 @@ export const useStore = defineStore({
 			show_hits: useStorage('show_hits', false),
 			showContracts: useStorage('showContracts', false),
 			resultsContracts: useStorage('resultsContracts', []),
+			showCandles: useStorage('showContracts', false),
+			resultsCandles: useStorage('resultsCandles', []),
 			contracts: useStorage('contracts', []),
 			accounts: useStorage('accounts', []),
 			selected_account: useStorage('selected_account', '')

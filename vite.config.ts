@@ -33,6 +33,6 @@ export default defineConfig({
 	},
 	define: { VITE_LOCAL_API: !!process.env.VITE_LOCAL_API },
 	server: {
-		open: '/',
+		open: '/?beta=true',
 	}
 })

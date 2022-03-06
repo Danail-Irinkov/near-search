@@ -13,6 +13,9 @@ const client = new Client({
 		password: config().elastic.password
 	}
 })
+
+updateCollectionMapping('receipts2')
+updateCollectionMapping('candles')
 function getCollectionSchema(collection:string){
 	let schema = {}
 
@@ -52,6 +55,24 @@ function getCollectionSchema(collection:string){
 			arg_types: { type: 'object' },
 			receipt_id: { type: 'text' },
 			block: { type: 'integer' }
+		}
+	}
+	if (collection === 'candles') {
+		schema = {
+			symbol: { type: 'keyword' },
+			type: { type: 'keyword' },
+			exchange: { type: 'keyword' },
+			crazy_score: { type: 'double' },
+			vol24: { type: 'double' },
+			vol24Value: { type: 'double' },
+			average24Price: { type: 'double' },
+			time: { type: 'integer' },
+			open: { type: 'double' },
+			close: { type: 'double' },
+			high: { type: 'double' },
+			low: { type: 'double' },
+			volume: { type: 'double' },
+			turnover: { type: 'double' },
 		}
 	}
 
@@ -113,13 +134,12 @@ export function createCollection(collection:string){
 
 export async function updateCollectionMapping(collection:string){
 	await client.indices.close({index: collection})
-	let asd = await client.indices.putMapping({
+	await client.indices.putMapping({
 		index: collection,
 		body: {
 			properties: getCollectionSchema(collection)
 		}
 	}, { ignore: [400] })
-	console.log('dasfasdfasdf', asd)
 	return client.indices.open({index: collection})
 }
 

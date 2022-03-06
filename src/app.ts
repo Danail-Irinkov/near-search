@@ -11,6 +11,7 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 
 import { Buffer } from 'buffer'
+import moment from 'moment'
 
 if (window) {
 	// @ts-ignore
@@ -75,6 +76,7 @@ let app = createApp(App)
 
 tooltipDirective(app)
 
+app.config.globalProperties.$moment = moment
 app.config.globalProperties.abbreviateNumber = function(number:number): string {
 	let num = Math.round(number)
 	let str = String(num)

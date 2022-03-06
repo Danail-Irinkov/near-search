@@ -22,6 +22,7 @@
     "chai": "^4.3.4",
     "firebase-admin": "^10.0.2",
     "firebase-functions": "^3.14.1",
+    "kucoin-node-sdk": "^1.0.4",
     "mocha": "^9.1.4",
     "near-api-js": "^0.44.2",
     "node-fetch": "2.6.7",

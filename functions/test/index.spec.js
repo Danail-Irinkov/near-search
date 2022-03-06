@@ -50,24 +50,40 @@ describe('NEAR Search Tests', () => {
 		// 		return Promise.reject(e)
 		// 	}
 		// })
-		it('returns a method hints', async () => {
-			try {
-				let res = await testHTTPFunction(myFunctions, 'getMethodHints',
-					{
-						body: {
-							contract: 'srch.near',
-							method: 'call_contract'
-						}
-					}
-				)
-				// console.warn('Searching for "near"', res)
-				// assert.isTrue(!!(res.contracts))
-				assert.isTrue(true)
-
-			}catch (e) {
-				return Promise.reject(e)
-			}
-		})
+		// it('returns a method hints', async () => {
+		// 	try {
+		// 		let res = await testHTTPFunction(myFunctions, 'getMethodHints',
+		// 			{
+		// 				body: {
+		// 					contract: 'srch.near',
+		// 					method: 'call_contract'
+		// 				}
+		// 			}
+		// 		)
+		// 		// console.warn('Searching for "near"', res)
+		// 		// assert.isTrue(!!(res.contracts))
+		// 		assert.isTrue(true)
+		//
+		// 	}catch (e) {
+		// 		return Promise.reject(e)
+		// 	}
+		// })
+		// it('returns a list of Tickers from Kucoin', async () => { // Not working with pubsub functions atm
+		// 	try {
+		// 		let res = await testHTTPFunction(myFunctions, 'updateCandlesIndex',
+		// 			{
+		// 				body: {
+		// 				}
+		// 			}
+		// 		)
+		// 		console.warn('Kucoin Tickers Crazy Candles', res.candles.length)
+		// 		// assert.isTrue(!!(res.contracts))
+		// 		assert.isTrue(true)
+		//
+		// 	}catch (e) {
+		// 		return Promise.reject(e)
+		// 	}
+		// })
 	})
 // 	describe('Updating Indexer', () => {
 // 		it('returns a list', async () => {

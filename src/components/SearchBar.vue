@@ -1,7 +1,7 @@
 <template>
 	<div class="medium-6 medium-offset-3 ctrl px-6">
 		<form class="searchForm" @submit.prevent="submitSearch">
-			<input type="text" v-model="searchQuery" placeholder="Search NEAR Contracts">
+			<input type="text" v-model="searchQuery" :placeholder="searchPlaceholder">
 			<span v-show="searchQuery" class="remove-btn"
 						@click="removeSearchQuery">
 					<fa-icon icon="times"/>
@@ -20,6 +20,10 @@ import {useStore} from '../store/index'
 export default {
 	name: 'SearchBar',
 	props: {
+		method: {
+			type: String,
+			default: 'queryIndexer'
+		}
 	},
 	data() {
 		return {
@@ -33,6 +37,11 @@ export default {
 			store
 		};
 	},
+	mounted(){
+		if (this.method === 'queryCandlesIndexer'){
+			this.submitSearch() // Auto load results on mount
+		}
+	},
 	methods: {
 		async submitSearch() {
 			try {
@@ -40,26 +49,18 @@ export default {
 				console.time('queryPool')
 				console.log('searchQuery', this.searchQuery)
 				this.isSearching = true;
-				let res = await this.axios.post(window.API_URL+'/queryIndexer', { query: this.searchQuery })
+				let res = await this.axios.post(window.API_URL+'/'+this.method, { query: this.searchQuery })
 				console.timeEnd('queryPool')
 				
-				// console.log('queryPool res', res.data.contracts)
-				this.contracts = [...res.data.contracts]
-				
-				if (!res?.data?.contracts?.length && this.searchQuery.indexOf('.near') !== -1) {
-					this.contracts = [{
-						account_id: String(this.searchQuery),
-						hits: 0,
-						avg_deposit: 0,
-						total_deposits: 0,
-						is_opened: true
-					}]
+				switch (this.method) {
+					case 'queryIndexer':
+						this.processContractResults(res)
+						break;
+					case 'queryCandlesIndexer':
+						this.processCandlesResults(res)
+						break;
 				}
-				
-				this.updateContractsFromLocalStorage()
-				
 				this.isSearching = false
-				this.store.showContracts = !!(this.contracts && this.contracts.length)
 				return res
 			} catch (e) {
 				this.isSearching = false
@@ -67,6 +68,110 @@ export default {
 				console.error('queryPool err', e)
 				return Promise.reject(e)
 			}
+		},
+		processCandlesResults(res) {
+			// console.log('queryPool res', res.data.contracts)
+			if (res.data?.candles?.length)
+				this.candles = [...res.data.candles]
+			else
+				this.candles = [{
+					symbol: 'NEAR-BTC',
+					type: '1hour',
+					crazy_score: 400,
+					vol24: 12345678,
+					vol24Value: 12345678,
+					average24Price: 0.00027,
+					time: 1646530547,
+					open: 0.00027,
+					close: 0.00027,
+					high: 0.00127,
+					low: 0.00022,
+					volume: 1234567,
+					turnover: 1234567
+				},
+				{
+					symbol: 'NEAR-BTC',
+					type: '1hour',
+					crazy_score: 300,
+					vol24: 12345678,
+					vol24Value: 12345678,
+					average24Price: 0.00027,
+					time: 1646536547,
+					open: 0.00027,
+					close: 0.00027,
+					high: 0.00027,
+					low: 0.00019,
+					volume: 1234567,
+					turnover: 1234567
+				},
+				{
+					symbol: 'NEAR-BTC',
+					type: '1hour',
+					crazy_score: 200,
+					vol24: 12345678,
+					vol24Value: 12345678,
+					average24Price: 0.00027,
+					time: 1646510547,
+					open: 0.00027,
+					close: 0.00027,
+					high: 0.00030,
+					low: 0.00015,
+					volume: 1234567,
+					turnover: 1234567
+				},
+				{
+					symbol: 'NEAR-BTC',
+					type: '1hour',
+					crazy_score: 100,
+					vol24: 12345678,
+					vol24Value: 12345678,
+					average24Price: 0.00027,
+					time: 1646540547,
+					open: 0.00027,
+					close: 0.00027,
+					high: 0.00137,
+					low: 0.00012,
+					volume: 1234567,
+					turnover: 1234567
+				},
+				{
+					symbol: 'NEAR-BTC',
+					type: '1hour',
+					crazy_score: 80,
+					vol24: 12345678,
+					vol24Value: 12345678,
+					average24Price: 0.00027,
+					time: 1646520547,
+					open: 0.00027,
+					close: 0.00027,
+					high: 0.00117,
+					low: 0.000134,
+					volume: 1234567,
+					turnover: 1234567
+				}
+			]
+			console.log('processCandlesResults candles', this.candles)
+			
+			this.store.resultsCandles = [...this.candles]
+			this.store.showCandles = !!(this.candles && this.candles.length)
+		},
+		processContractResults(res) {
+			// console.log('queryPool res', res.data.contracts)
+			this.contracts = [...res.data.contracts]
+			
+			if (!res?.data?.contracts?.length && this.searchQuery.indexOf('.near') !== -1) {
+				this.contracts = [{
+					account_id: String(this.searchQuery),
+					hits: 0,
+					avg_deposit: 0,
+					total_deposits: 0,
+					is_opened: true
+				}]
+			}
+			
+			this.updateContractsFromLocalStorage()
+			this.store.showContracts = !!(this.contracts && this.contracts.length)
+			
 		},
 		updateContractsFromLocalStorage() {
 			let stored_contracts = this.store.contracts
@@ -85,6 +190,14 @@ export default {
 			this.searchQuery = '';
 			this.store.showContracts = false;
 		},
+	},
+	computed: {
+		searchPlaceholder(){
+			if (this.method === 'queryIndexer')
+			return 'Search NEAR Contracts'
+			else if (this.method === 'queryCandlesIndexer')
+			return 'Search Crazy Candles'
+		}
 	}
 }
 </script>
