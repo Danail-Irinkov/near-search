@@ -232,7 +232,7 @@ export default {
 			console.log('Wallet Error Message:', this.$route.query.errorCode+': '+this.$route.query.errorMessage)
 		}
 		if(this.$route.query.account_id) {
-			this.store.selected_account = this.$route.query.account_id
+			this.store.user.near_id = this.$route.query.account_id
 		}
 	},
 	async mounted() {
@@ -260,16 +260,16 @@ export default {
 			this.keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
 			
 			// Defaulting to first account in keystore
-			if (!this.store.selected_account) {
+			if (!this.store.user.near_id) {
 				this.store.accounts = [...(await this.keyStore.getAccounts(this.network))]
 				if (this.store.accounts[0]) {
-					this.store.selected_account =  this.store.accounts[0]
+					this.store.user.near_id =  this.store.accounts[0]
 				}
 			}
 			
 			this.near = await nearAPI.connect({ ...options, deps: { keyStore: this.keyStore }})
-			this.wallet = new nearAPI.WalletConnection(this.near, `${this.network}:${this.store.selected_account}:`)
-			this.account = await this.near.account(this.store.selected_account)
+			this.wallet = new nearAPI.WalletConnection(this.near, `${this.network}:${this.store.user.near_id}:`)
+			this.account = await this.near.account(this.store.user.near_id)
 			this.store.accounts = [...(await this.keyStore.getAccounts(this.network))]
 		},
 		requestSignIn() {

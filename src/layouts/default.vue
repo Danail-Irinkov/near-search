@@ -19,6 +19,30 @@ html {
 	height: 100%;
 	background: val($c-white);
 }
+body {
+	overflow-y: scroll;
+}
+::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 20px;
+	background-color: rgba(245, 245, 245, 0.4);
+}
+
+::-webkit-scrollbar
+{
+	position: absolute;
+	width: 6px;
+	background-color: rgba(245, 245, 245, 0.74);
+}
+
+::-webkit-scrollbar-thumb
+{
+	border-radius: 20px;
+	-webkit-box-shadow: inset 0 0 3px rgba(0,0,0,.3);
+	background-color: rgba(140, 140, 140, 0.96);
+}
+
 a {
 	color: #333;
 }
@@ -40,7 +64,7 @@ h2 {
 	color: #555;
 	height: 100%;
 	text-align: center;
-	padding:8vh 0;
+	padding: 4vh 5px;
 	max-width: 600px;
 	margin: 0 auto;
 }

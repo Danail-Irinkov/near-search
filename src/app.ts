@@ -1,4 +1,3 @@
-import 'virtual:windi.css'
 import {createApp} from "vue"
 import {router} from "./router"
 import { createPinia } from "pinia";
@@ -12,6 +11,7 @@ import VueAxios from 'vue-axios'
 
 import { Buffer } from 'buffer'
 import moment from 'moment'
+import globals from './globals'
 
 if (window) {
 	// @ts-ignore
@@ -44,37 +44,24 @@ library.add(faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 
 // @ts-ignore
 import tooltipDirective from "./directives/tooltip";
+import {useStore} from '@/store'
 
-// Global Methods
-const autoLinkText = function (text: string, linkClass = 'descriptionLink') {
-	return AutoLinker.link(text, {
-		newWindow: true,
-		className: linkClass,
-		truncate: { length: 36, location: 'smart' }
-	});
-}
-const openLinkNewTab = (URL = null) => {
-	if (URL)
-		window.open(URL, '_blank')
-}
-const sleep = (ms:number) => {
-	return new Promise(resolve => {
-		setTimeout(resolve, ms)
-	})
-}
+
 let app = createApp(App)
   .use(router)
   .use(createPinia())
   .use(head)
 	.use(VueAxios, axios)
-	.provide('$autoLinkText', autoLinkText)
-	.provide('openLinkNewTab', openLinkNewTab)
-	.provide('sleep', sleep)
 	.component('fa-icon', FontAwesomeIcon)
 	.component('textarea-auto', TextAreaAutosize)
 	.component('expand-height-transition', ExpandHeightTransition)
 
 tooltipDirective(app)
+
+const state = useStore()
+globals.install(app, state)
+// @ts-ignore
+// app.config.productionTip = false
 
 app.config.globalProperties.$moment = moment
 app.config.globalProperties.abbreviateNumber = function(number:number): string {

@@ -11,7 +11,15 @@ export interface Contract {
 	probableInterfaces?: [];
 	byMethod?: object;
 }
+export interface User {
+	email: string;
+	near_id: string;
+	xdroid_push_id: string;
+	google_token: string | null;
+	enable_notifications: Boolean;
+}
 export interface RootState {
+	user: User,
 	show_login_dropdown: Boolean,
 	trigger_wallet_signin: Boolean,
 	update_selected_account: Boolean,
@@ -30,6 +38,7 @@ export const useStore = defineStore({
 	state: () => {
 		// @ts-ignore
 		return {
+			user: useStorage('user', {}),
 			show_login_dropdown: false,
 			trigger_wallet_signin: false,
 			update_selected_account: false,
