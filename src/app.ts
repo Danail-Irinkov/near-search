@@ -37,6 +37,7 @@ import { faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 	faFunnelDollar,	faReply,
 	faReceipt, faStopwatch, faCog } from '@fortawesome/free-solid-svg-icons'
 
+// @ts-ignore
 library.add(faSearch, faTimes, faSpinner, faChevronRight, faChevronDown,
 	faCircleNotch, faPlay, faListUl, faHandHoldingUsd, faClipboardList,
 	faFunnelDollar,	faReply,

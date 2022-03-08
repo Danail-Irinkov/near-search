@@ -15,7 +15,7 @@ export async function sendNotificationToAll(notification:Notification): Promise<
 
 			users.forEach((user) => {
 				for (let platform of notify_platforms) {
-					promises.push(platform.send(user.data(), notification))
+					promises.push(platform.send(user.data() as User, notification))
 				}
 			});
 

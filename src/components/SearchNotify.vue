@@ -25,7 +25,8 @@
 							 v-model="store.user.xdroid_push_id">
 		</TextInput>
 	</div>
-	<div class="input-block mt-8">
+	<div class="input-block mt-8"
+			 v-tooltip:top.tooltip="'Get instantly notified for Crazy Candles by email or Push Notifications'">
 		<a class="col-span-7">
 			Enable Notifications
 		</a>

@@ -6,13 +6,18 @@
 		</Head>
 		
 		<!--		// BODY    -->
-		<img :src="SearchNearLogo" alt="Search NEAR Logo" class="mb-8 cursor-pointer"
+		<img :src="SearchNearLogo" alt="Search NEAR Logo" class="mb-4 cursor-pointer"
 				 @click="redirectHome()" />
+		
 		<Tabs class="my-8 cursor-pointer"
 					ref="tabs"
 					v-if="beta"
 					:tabs="tabs"
 					@clickedTab="handleTabChange"></Tabs>
+		<div v-else class="text-right items-end grid px-1 pb-1">
+			<span class="link" @click="enableBeta()">Try Beta!</span>
+		</div>
+		
 		<searchContracts v-if="selected_tab === 'Contracts'"/>
 		<SearchStaking v-if="selected_tab === 'Staking'"/>
 		<SearchCandles v-if="selected_tab === 'Candles'"/>
@@ -68,6 +73,11 @@ export default {
 		}
 	},
 	methods: {
+		enableBeta(){
+			let new_url = this.$updateQueryStringParameter(window.location.href, 'beta', 'true')
+			if(window.location.href !== new_url)
+				this.$router.push(new_url)
+		},
 		handleTabChange(data){
 			if (window) {
 				let new_url = this.$updateQueryStringParameter(window.location.href, 'tab', data.tab)
