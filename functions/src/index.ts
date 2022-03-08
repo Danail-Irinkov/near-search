@@ -1,3 +1,4 @@
+process.env.GCLOUD_PROJECT = 'near-search-3807d'
 import * as path from 'path'
 import * as functions from "firebase-functions";
 // import pg from "./pg";
@@ -266,31 +267,36 @@ export const updateCandlesIndex = functions.region('europe-west3').runWith({ mem
 		let promises: Promise<Candle>[] = []
 		let last_candle_timestamp = (await db.collection('state').doc('updateIndex').get()).data()?.last_candle_timestamp || 0
 		let now_timestamp = new Date().getTime()/1000
-		let factor = 1.30
 
 		for (let ticker of tickers.data.ticker) {
 			if (ticker && parseFloat(ticker.volValue) > 10) {
-				let low_benchmark = parseFloat(ticker.averagePrice)/factor
-				let high_benchmark = parseFloat(ticker.averagePrice)*factor
+				let low_benchmark = kucoin.getLowBenchmark(ticker)
+				let high_benchmark = kucoin.getHighBenchmark(ticker)
 				if (parseFloat(ticker.high) > high_benchmark || parseFloat(ticker.low) < low_benchmark) {
 					// console.log('updateCandlesIndex symbol', ticker.symbol)
 					promises.push(kucoin.findCrazyCandles(ticker, '1hour', last_candle_timestamp))
 				}
 			}
-
 		}
 
 		let candles: Candle[] = (await Promise.all(promises)).flat()
-		console.log('updateCandlesIndex candles', candles.length)
+		// console.log('updateCandlesIndex candles', candles.length)
+		// console.log('updateCandlesIndex candles', candles[0])
 
-		if (candles.length)
+		if (candles.length) {
 			await addRecordsToIndex(candles, 'candles')
-
-		await sendNotificationToAll({
-			title: '1',
-			subtitle: '2',
-			url: '3',
-		})
+			let sent_candles = []
+			for (let candle of candles) {
+				if (sent_candles.indexOf(candle.symbol) === -1) {
+					sent_candles.push(candle.symbol)
+					await sendNotificationToAll({
+						title: `${candle.symbol} ${(getChangePercent(candle) * 100).toFixed(0)}`,
+						subtitle: `CrazyN ${getExclaims(candle.crazy_score)}  ${Math.round(candle.crazy_score)}  ${getExclaims(candle.crazy_score)}`,
+						url: `https://www.kucoin.com/trade/${candle.symbol}?type=1hour`,
+					})
+				}
+			}
+		}
 
 		await db.collection('state').doc('updateIndex').set({ last_candle_timestamp: now_timestamp})
 		// res.send({candles})
@@ -366,4 +372,24 @@ function getBlockHeightByDaysAgo(days_ago: number) {
 
 	console.log('requested Height', height)
 	return height
+}
+
+function getExclaims(score:number){
+	let exclaims = '!'
+	if(score > 100) exclaims += '!'
+	if(score > 200) exclaims += '!'
+	if(score > 300) exclaims += '!'
+	return exclaims
+}
+function getChangePercent(candle:Candle){
+	let percent = 0
+	let up_delta = candle.high - candle.average24Price
+	let down_delta = candle.average24Price - candle.low
+
+	if(up_delta > down_delta)
+		percent = candle.high/candle.average24Price
+	else
+		percent = -(candle.average24Price/candle.low)
+
+	return percent
 }

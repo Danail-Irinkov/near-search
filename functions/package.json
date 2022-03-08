@@ -9,8 +9,8 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "cross-env HIDE_LOGS=true ts-mocha --timeout 100000",
-    "testdev": "ts-mocha --timeout 100000",
+    "test": "cross-env HIDE_LOGS=true ts-mocha --timeout 10000",
+    "testdev": "ts-mocha --timeout 10000",
     "test:contract": "npx ts-mocha --grep contract"
   },
   "engines": {

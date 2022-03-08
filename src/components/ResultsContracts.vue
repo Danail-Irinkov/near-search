@@ -51,7 +51,7 @@
 				</div>
 				<div class="col-span-2">
 					<div class="w-fit h-fit inline-block" v-tooltip:top.tooltip="'NEAR Explorer'">
-						<button class="outline-0" style="font-size: 24px; overflow: hidden;"
+						<button class="outline-0" style="font-size: 24px;"
 										v-if="store.resultsContracts[index].account_id"
 										@click="openLinkNewTab(`https://explorer.near.org/accounts/${store.resultsContracts[index].account_id}`)">
 							<img :src="NEARsvg" class="near-explorer-logo" alt="near-explorer-logo"/>
@@ -538,6 +538,14 @@ export default {
 	}
 }
 </script>
+<style scoped lang="scss">
+[tooltip] {
+	&:before,
+	&:after {
+		font-size: 0.5em;
+	}
+}
+</style>
 <style lang="scss">
 $c-white: #F7EFE2;
 $c-black: #00000042;

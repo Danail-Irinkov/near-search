@@ -10,29 +10,51 @@
 		<div v-if="store.showCandles"
 				 class="grid grid-cols-12 w-full"
 		>
-		<div class="grid grid-cols-12 col-span-12 content-center text-center items-center"
-			v-for="candle of store.resultsCandles">
-			<h4 class="text-headline mx-auto max-w-fit col-span-3 items-center">
-				{{ candle.symbol }}
+		<div class="smaller-font grid grid-cols-12 col-span-12 mb-4 content-center text-center items-center">
+			<h4 class="text-headline mx-auto max-w-fit col-span-3 items-center"
+					v-tooltip:top.tooltip="'Hah lol, you know what that means ;)'">
+				Pair
 			</h4>
-			<h4 class="text-headline mx-auto max-w-fit col-span-3 items-center">
-				{{ getTimeSince(candle.time) }}
-			</h4>
-			<h4 class="text-headline mx-auto max-w-fit col-span-2 items-center"
-					:class="{red: getChangePercent(candle) < 0, green: getChangePercent(candle) > 0}">
-				{{ (getChangePercent(candle)*100).toFixed(0) }}%
+			<h4 class="text-headline mx-auto max-w-fit col-span-3 items-center"
+					v-tooltip:top.tooltip="'How long ago the candle closed'">
+				Time
 			</h4>
 			<h4 class="text-headline mx-auto max-w-fit col-span-2 items-center"
-					:class="getCrazyClasses(candle)">
-				{{ candle.crazy_score }}
+					v-tooltip:top.tooltip="'Max deviation from the 24h average'">
+				Change
+			</h4>
+			<h4 class="text-headline mx-auto max-w-fit col-span-2 items-center"
+					v-tooltip:top.tooltip="'How crazy is the candle?\n\n< 100 - Weak\n100 - 200 - Good\n200+ - INSANE!\n\n A big move is pending!'">
+				CrazyN
 			</h4>
 			<h4 class="text-headline mx-auto max-w-fit col-span-2 items-center">
-				<button class="outline-0" style="font-size: 24px; overflow: hidden;"
-								@click="openLinkNewTab(`https://www.kucoin.com/trade/${candle.symbol}`)">
-					<img :src="kuCoinLogo" class="stats-gallery-logo" alt="stats-gallery-logo"/>
-				</button>
+			
 			</h4>
 		</div>
+		<div class="grid grid-cols-12 col-span-12 content-center text-center items-center"
+				v-for="candle of store.resultsCandles">
+				<h4 class="text-headline mx-auto max-w-fit col-span-3 items-center">
+					{{ candle.symbol }}
+				</h4>
+				<h4 class="text-headline mx-auto max-w-fit col-span-3 items-center">
+					{{ getTimeSince(candle.time) }}
+				</h4>
+				<h4 class="text-headline mx-auto max-w-fit col-span-2 items-center"
+						:class="{red: getChangePercent(candle) < 0, green: getChangePercent(candle) > 0}">
+					{{ (getChangePercent(candle)*100).toFixed(0) }}%
+				</h4>
+				<h4 class="text-headline mx-auto max-w-fit col-span-2 items-center"
+						:class="getCrazyClasses(candle)">
+					{{ Math.round(candle.crazy_score) }}
+				</h4>
+				<h4 class="text-headline mx-auto max-w-fit col-span-2 items-center">
+					<button class="outline-0" style="font-size: 24px;"
+									@click="openLinkNewTab(`https://www.kucoin.com/trade/${candle.symbol}`)"
+									v-tooltip:top.tooltip="'KuCoin'">
+						<img :src="kuCoinLogo" class="stats-gallery-logo" alt="stats-gallery-logo"/>
+					</button>
+				</h4>
+			</div>
 		</div>
 	</expand-height-transition>
 	
@@ -132,5 +154,8 @@ export default {
 }
 .red {
 	@apply text-bold text-red-500
+}
+.smaller-font > h4 {
+	font-size:14px!important;
 }
 </style>

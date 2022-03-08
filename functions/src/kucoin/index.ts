@@ -17,15 +17,23 @@ API.init({
 	authVersion: 2,
 });
 
+let factor = 1.20
+let min_crazy_score = 30
+
 /** API use */
 export const getAllTickers = async () => {
 	return API.rest.Market.Symbols.getAllTickers()
 };
+export const getLowBenchmark = (ticker:any) => {
+	return parseFloat(ticker.averagePrice)/factor
+};
+export const getHighBenchmark = (ticker:any) => {
+	return parseFloat(ticker.averagePrice)*factor
+};
 export const findCrazyCandles = async (ticker:Ticker, type:string = '1hour', startAt: number = 0, endAt: number = 0):Promise<Candle[]> => {
 	try {
-		let factor = 1.30
-		let low_benchmark = ticker.averagePrice/factor
-		let high_benchmark = ticker.averagePrice*factor
+		let low_benchmark = getLowBenchmark(ticker)
+		let high_benchmark = getHighBenchmark(ticker)
 		let crazy_candles: Candle[] = []
 
 		// Date Filter
@@ -38,7 +46,7 @@ export const findCrazyCandles = async (ticker:Ticker, type:string = '1hour', sta
 
 
 		let klines: [] = (await API.rest.Market.Histories.getMarketCandles(ticker.symbol, type, dates)).data
-		// console.log('klines', {klines})
+		console.log('klines', {klines})
 		if (klines && klines.length)
 		for (let kline of klines) {
 			if (parseFloat(kline[6])*24/ticker.vol > 3 && (parseFloat(kline[4]) < low_benchmark || parseFloat(kline[3]) > high_benchmark)) {
@@ -46,7 +54,7 @@ export const findCrazyCandles = async (ticker:Ticker, type:string = '1hour', sta
 				// console.log('kline', kline, 'kline')
 				let crazy_score = calcCrazyScore(ticker, kline)
 
-				if (crazy_score > 40) {
+				if (crazy_score > min_crazy_score) {
 					let candle:Candle = {
 						symbol: ticker.symbol,
 						type: type,

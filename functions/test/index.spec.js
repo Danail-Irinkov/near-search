@@ -68,39 +68,39 @@ describe('NEAR Search Tests', () => {
 		// 		return Promise.reject(e)
 		// 	}
 		// })
-		// it('returns a list of Tickers from Kucoin', async () => { // Not working with pubsub functions atm
-		// 	try {
-		// 		let res = await testHTTPFunction(myFunctions, 'updateCandlesIndex',
-		// 			{
-		// 				body: {
-		// 				}
-		// 			}
-		// 		)
-		// 		console.warn('Kucoin Tickers Crazy Candles', res.candles.length)
-		// 		// assert.isTrue(!!(res.contracts))
-		// 		assert.isTrue(true)
-		//
-		// 	}catch (e) {
-		// 		return Promise.reject(e)
-		// 	}
-		// })
-	})
-	describe('Updating Indexer', () => {
-		it('returns a list', async () => {
+		it('returns a list of Tickers from Kucoin', async () => { // Not working with pubsub functions atm
 			try {
-				let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
+				let res = await testHTTPFunction(myFunctions, 'updateCandlesIndex',
 					{
-						body: {}
+						body: {
+						}
 					}
 				)
-				console.warn('Updating Indexer: ', res)
-				assert.isTrue(!!(res))
+				console.warn('Kucoin Tickers Crazy Candles', res.length)
+				// assert.isTrue(!!(res.contracts))
+				assert.isTrue(!!res)
 
 			}catch (e) {
 				return Promise.reject(e)
 			}
 		})
 	})
+	// describe('Updating Indexer', () => {
+	// 	it('returns a list', async () => {
+	// 		try {
+	// 			let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
+	// 				{
+	// 					body: {}
+	// 				}
+	// 			)
+	// 			console.warn('Updating Indexer: ', res)
+	// 			assert.isTrue(!!(res))
+	//
+	// 		}catch (e) {
+	// 			return Promise.reject(e)
+	// 		}
+	// 	})
+	// })
 
 
 	// describe('Testing Migration Flow', () => {
@@ -155,7 +155,7 @@ function testHTTPFunction(myFunctions, function_name, manual_request = {}, manua
 			res.end = sinon.stub().returns(res)
 			res.json = sinon.stub().returns(res)
 
-			myFunctions[function_name](req, res)
+			myFunctions[function_name](req, res).then((res)=>resolve(res), (e)=>reject(e))
 		} catch (e) {
 			console.warn('testHTTPFunction err: ', e)
 			reject(e)

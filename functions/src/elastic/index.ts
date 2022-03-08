@@ -313,27 +313,11 @@ export async function addRecordsToIndex(records: any[], collection: string = '')
 	try {
 		await createCollection(collection)
 
-		const body = records.flatMap(doc => {
-			return [
-			{
-				index: {
-					_index: collection,
-					_id: doc.receipt_id
-				}
-			},
-			doc,
-			{
-				update: { // Needed to allow for executing the script to convert string to Near amount
-					_index: collection,
-					_id: doc.receipt_id
-				}
-			},
-			{
-				script: { // Adding field _source.deposit_near by parsing .deposit to double
-					id: 'convert_yocto_to_near'
-				}
-			}
-			]})
+		let body: any
+		if (collection.indexOf('receipts') !== -1)
+			body = records.flatMap(doc => {return receiptsAggregation(collection, doc)})
+		else if (collection.indexOf('candles') !== -1)
+			body = records.flatMap(doc => {return candlesAggregation(collection, doc)})
 
 		const { body: bulkResponse } = await client.bulk({ refresh: true, body })
 
@@ -375,4 +359,38 @@ export function SearchRecordsByQuery(collection: string = '', query: object = {}
 		index: collection,
 		body: query
 	})
+}
+
+function receiptsAggregation(collection:any, doc:any) {
+	return [
+		{
+			index: {
+				_index: collection,
+				_id: doc.receipt_id
+			}
+		},
+		doc,
+		{
+			update: { // Needed to allow for executing the script to convert string to Near amount
+				_index: collection,
+				_id: doc.receipt_id
+			}
+		},
+		{
+			script: { // Adding field _source.deposit_near by parsing .deposit to double
+				id: 'convert_yocto_to_near'
+			}
+		}
+	]
+}
+
+function candlesAggregation(collection:any, doc:any) {
+	return [
+		{
+			index: {
+				_index: collection
+			}
+		},
+		doc
+	]
 }
