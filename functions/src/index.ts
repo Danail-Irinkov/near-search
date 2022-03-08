@@ -10,6 +10,10 @@ import { addRecordsToIndex, SearchRecordsByQuery } from "./elastic";
 // @ts-ignore
 // import { createScript, reindexFlow, parseDepositNearFields } from "./elastic";
 import { Candle } from "../types";
+import {User} from '../../src/store'
+
+// @ts-ignore
+import { sendNotificationToAll, sendNotificationToUser } from "./notifications";
 
 const firebaseConfig: any = {
 	apiKey: "AIzaSyDfiXN-vr9aoexpFKBumbyVjGYCEl3REkE",
@@ -26,7 +30,7 @@ if(fs.existsSync('./near-search-3807d-firebase-adminsdk-ic0qs-021f1395c1.json') 
 }
 
 initializeApp(firebaseConfig)
-const db = getFirestore()
+export const db = getFirestore()
 db.settings({ ignoreUndefinedProperties: true })
 
 const cors = require('cors')({origin: true});
@@ -177,17 +181,17 @@ export const getMethodHints = functions.region('europe-west3').https.onRequest((
 });
 
 export const updateIndexTest = functions.https.onRequest(async (req, res): Promise<any> => {
-	const snapshot = await db.collection('receipts').doc('21T4J4c8Hzo4TxW8JyDHt2hqTDsU6n4Zo5vmvoJGTxTa').get()
-	// const receipts =  snapshot.docs.map(doc => doc.data());
-	// fl.log('Saved receipts.length', receipts.length)
-	console.log('snapshot.data()', snapshot.data())
-	// let reIndexing = await reindexFlow('receipts2', 'receipts3')
-	// fl.log('Saved Index reIndexing', reIndexing)
-	// await createScript()
-	// let s1 = await parseDepositNearFields('receipts2')
-	// fl.log('Saved Index parseDepositNearFields', s1)
-	// let saved = await addRecordsToIndex([snapshot.data()], 'receipts2')
-	// fl.log('Saved Index', saved)
+	const users = await db.collection('users').where('near_id', '==', 'danail.near').get()
+	let promises:any = []
+	users.forEach((user) => {
+		promises.push(sendNotificationToUser(user.data() as User, {
+			title: 'Testing Notification',
+			subtitle: 'Made from Firebase',
+			url: 'https://google.com',
+		}))
+	})
+	let result = await Promise.all(promises)
+	console.log('updateIndexTest result', result)
 	return res.send('Success')
 })
 export const updateIndex = functions.region('europe-west3').runWith({ memory: '512MB' }).pubsub.schedule('*/5 * * * *').timeZone('EET').onRun(async (context): Promise<any> => {
@@ -281,6 +285,12 @@ export const updateCandlesIndex = functions.region('europe-west3').runWith({ mem
 
 		if (candles.length)
 			await addRecordsToIndex(candles, 'candles')
+
+		await sendNotificationToAll({
+			title: '1',
+			subtitle: '2',
+			url: '3',
+		})
 
 		await db.collection('state').doc('updateIndex').set({ last_candle_timestamp: now_timestamp})
 		// res.send({candles})

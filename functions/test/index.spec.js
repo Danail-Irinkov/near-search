@@ -85,22 +85,22 @@ describe('NEAR Search Tests', () => {
 		// 	}
 		// })
 	})
-// 	describe('Updating Indexer', () => {
-// 		it('returns a list', async () => {
-// 			try {
-// 				let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
-// 					{
-// 						body: {}
-// 					}
-// 				)
-// 				console.warn('Updating Indexer: ', res)
-// 				// assert.isTrue(!!(res.contracts))
-//
-// 			}catch (e) {
-// 				return Promise.reject(e)
-// 			}
-// 		})
-// 	})
+	describe('Updating Indexer', () => {
+		it('returns a list', async () => {
+			try {
+				let res = await testHTTPFunction(myFunctions, 'updateIndexTest',
+					{
+						body: {}
+					}
+				)
+				console.warn('Updating Indexer: ', res)
+				assert.isTrue(!!(res))
+
+			}catch (e) {
+				return Promise.reject(e)
+			}
+		})
+	})
 
 
 	// describe('Testing Migration Flow', () => {

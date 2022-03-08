@@ -33,6 +33,12 @@ export interface RootState {
 	selected_account: RemovableRef<String>;
 }
 
+export interface Notification {
+	title: string,
+	subtitle: string,
+	url: string,
+}
+
 export const useStore = defineStore({
 	id: 'main',
 	state: () => {
