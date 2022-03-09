@@ -17,6 +17,8 @@ export interface User {
 	xdroid_push_id: string;
 	google_token: string | null;
 	enable_notifications: Boolean;
+	notify_email: Boolean;
+	notify_push_notification_api: Boolean;
 }
 export interface RootState {
 	user: User,
@@ -34,6 +36,7 @@ export interface RootState {
 }
 
 export interface Notification {
+	type: string,
 	title: string,
 	subtitle: string,
 	url: string,

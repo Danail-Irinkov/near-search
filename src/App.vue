@@ -33,7 +33,14 @@ export default defineComponent({
 	@apply no-underline hover:underline cursor-pointer;
 	color: #1e4ed5;
 }
-
+.disabled {
+	pointer-events: none;
+	cursor: not-allowed;
+	> input {
+		pointer-events: none;
+		cursor: not-allowed;
+	}
+}
 .row {
 	@apply grid col-span-12 grid-cols-12
 }

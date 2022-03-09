@@ -196,7 +196,6 @@
 <script>
 import NEARsvg from '../assets/NEAR/SVG/near_icon.svg'
 import statsGalleryLogo from '../assets/stats_gallery_logo.png'
-import near_config from '../components/near_config'
 import * as nearAPI from 'near-api-js'
 import {parseContract} from 'near-contract-parser'
 import { useStore } from '../store/index'
@@ -204,15 +203,12 @@ import * as BN from 'bn.js'
 
 export default {
 	name: 'ResultsContracts',
-	inject: ['openLinkNewTab', 'sleep'],
+	inject: ['openLinkNewTab', 'sleep',
+		'near', 'keyStore', 'wallet', 'account' ],
 	data() {
 		return {
 			show_hits: false,
 			network: 'mainnet',
-			near: {},
-			keyStore: {},
-			wallet: {},
-			account : {},
 		}
 	},
 	setup() {
@@ -236,7 +232,6 @@ export default {
 		}
 	},
 	async mounted() {
-		await this.connectToNEARAccount()
 	},
 	methods: {
 		calcFontSize(length) {
@@ -254,23 +249,6 @@ export default {
 		toggleMethod(index, method) {
 			this.store.resultsContracts[index].methods[method].is_opened = !this.store.resultsContracts[index].methods[method].is_opened
 			
-		},
-		async connectToNEARAccount() {
-			let options = near_config(this.network)
-			this.keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore()
-			
-			// Defaulting to first account in keystore
-			if (!this.store.user.near_id) {
-				this.store.accounts = [...(await this.keyStore.getAccounts(this.network))]
-				if (this.store.accounts[0]) {
-					this.store.user.near_id =  this.store.accounts[0]
-				}
-			}
-			
-			this.near = await nearAPI.connect({ ...options, deps: { keyStore: this.keyStore }})
-			this.wallet = new nearAPI.WalletConnection(this.near, `${this.network}:${this.store.user.near_id}:`)
-			this.account = await this.near.account(this.store.user.near_id)
-			this.store.accounts = [...(await this.keyStore.getAccounts(this.network))]
 		},
 		requestSignIn() {
 			this.wallet.requestSignIn(

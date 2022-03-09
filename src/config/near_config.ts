@@ -1,4 +1,4 @@
-export default function (network, contract_id = null) {
+export default function (network:string, contract_id = null): any {
     let config;
     switch (network) {
     case 'production':
@@ -48,7 +48,7 @@ export default function (network, contract_id = null) {
         };
         break;
     default:
-        throw Error(`Unconfigured environment '${env}'. Can be configured in src/config.js.`);
+        throw Error(`Unconfigured environment '${network}'. Can be configured in src/config.js.`);
     }
 
     // adding x-api-key for given RPC Server

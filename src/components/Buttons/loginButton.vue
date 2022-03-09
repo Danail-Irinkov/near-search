@@ -1,16 +1,22 @@
 <template>
 	<button class="login-with-google-btn"
-					@click="googleLoginLogout"
+					@click="handleClick"
 	>
-		Continue with Google
+		{{btnTitle}}
 	</button>
 </template>
 
 <script>
 import {useStore} from '../../store/index'
 export default {
-	name: 'googleButton',
-	inject: ['$firebase'],
+	name: 'loginButton',
+	props: {
+		platform: {
+			type: String,
+			default: 'google'
+		}
+	},
+	inject: ['$firebase', 'wallet'],
 	setup() {
 		const store = useStore()
 		return {
@@ -19,8 +25,32 @@ export default {
 	},
 	data: () => ({
 	}),
+	computed: {
+		btnTitle() {
+			let title = 'Continue with Google'
+			if (this.platform === 'near')
+				title = 'Login with NEAR'
+			
+			return title
+		},
+	},
 	methods: {
-		async googleLoginLogout () {
+		handleClick() {
+			if (this.platform === 'google')
+				return this.googleLoginLogout()
+			if (this.platform === 'near')
+				return this.nearLoginLogout()
+		},
+		async nearLoginLogout() {
+			console.log('nearLoginLogout')
+			return this.wallet.requestSignIn(
+				"srch.near", // contract requesting access
+				"Search Near", // optional
+				window.location.href, // optional
+				window.location.href // optional
+			);
+		},
+		async googleLoginLogout() {
 			console.log('googleLoginLogout')
 			return this.$firebase.googleSignIn()
 		},

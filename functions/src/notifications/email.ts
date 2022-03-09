@@ -4,10 +4,11 @@ import {db} from "../index";
 export default {
 	async send(user:User, notification:Notification): Promise<any>{
 		try {
+			if (!user.email) return
 			console.log('Sending Notification Email')
 			await db.collection("emails")
 				.add({
-					to: "dan@procc.co",
+					to: user.email,
 					message: {
 						subject: "searchnear.net - "+notification.title,
 						text: notification.subtitle,

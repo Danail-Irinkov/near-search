@@ -13,9 +13,12 @@ export async function sendNotificationToAll(notification:Notification): Promise<
 			let promises:any = []
 			let users = await db.collection('users').where('enable_notifications', '==', true).get()
 
-			users.forEach((user) => {
+			users.forEach((user_doc) => {
+				let user: User = user_doc.data() as User
 				for (let platform of notify_platforms) {
-					promises.push(platform.send(user.data() as User, notification))
+					// @ts-ignore
+					if (user[`notify_${platform}`])
+						promises.push(platform.send(user, notification))
 				}
 			});
 

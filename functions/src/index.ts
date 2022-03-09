@@ -11,7 +11,7 @@ import { addRecordsToIndex, SearchRecordsByQuery } from "./elastic";
 // @ts-ignore
 // import { createScript, reindexFlow, parseDepositNearFields } from "./elastic";
 import { Candle } from "../types";
-import {User} from '../../src/store'
+// import {User} from '../../src/store'
 
 // @ts-ignore
 import { sendNotificationToAll, sendNotificationToUser } from "./notifications";
@@ -181,20 +181,20 @@ export const getMethodHints = functions.region('europe-west3').https.onRequest((
 	})
 });
 
-export const updateIndexTest = functions.https.onRequest(async (req, res): Promise<any> => {
-	const users = await db.collection('users').where('near_id', '==', 'danail.near').get()
-	let promises:any = []
-	users.forEach((user) => {
-		promises.push(sendNotificationToUser(user.data() as User, {
-			title: 'Testing Notification',
-			subtitle: 'Made from Firebase',
-			url: 'https://google.com',
-		}))
-	})
-	let result = await Promise.all(promises)
-	console.log('updateIndexTest result', result)
-	return res.send('Success')
-})
+// export const updateIndexTest = functions.https.onRequest(async (req, res): Promise<any> => {
+// 	const users = await db.collection('users').where('near_id', '==', 'danail.near').get()
+// 	let promises:any = []
+// 	users.forEach((user) => {
+// 		promises.push(sendNotificationToUser(user.data() as User, {
+// 			title: 'Testing Notification',
+// 			subtitle: 'Made from Firebase',
+// 			url: 'https://google.com',
+// 		}))
+// 	})
+// 	let result = await Promise.all(promises)
+// 	console.log('updateIndexTest result', result)
+// 	return res.send('Success')
+// })
 export const updateIndex = functions.region('europe-west3').runWith({ memory: '512MB' }).pubsub.schedule('*/5 * * * *').timeZone('EET').onRun(async (context): Promise<any> => {
 	try {
 		fl.log('updateIndex Start');
@@ -290,6 +290,7 @@ export const updateCandlesIndex = functions.region('europe-west3').runWith({ mem
 				if (sent_candles.indexOf(candle.symbol) === -1) {
 					sent_candles.push(candle.symbol)
 					await sendNotificationToAll({
+						type: 'candle',
 						title: `${candle.symbol} ${(getChangePercent(candle) * 100).toFixed(0)}`,
 						subtitle: `CrazyN ${getExclaims(candle.crazy_score)}  ${Math.round(candle.crazy_score)}  ${getExclaims(candle.crazy_score)}`,
 						url: `https://www.kucoin.com/trade/${candle.symbol}?type=1hour`,

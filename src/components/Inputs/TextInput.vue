@@ -1,9 +1,12 @@
 <template>
-	<div>
+	<div
+		:class="{ disabled: !!disabled }">
 		<SearchInput
 			:searchIcon="false"
 			:shortcutIcon="false"
 			:value="modelValue"
+			:disabled="disabled"
+			:class="{ disabled: !!disabled }"
 			@change="updateValue($event.target.value)"
 			v-model="modelValue" />
 	</div>
@@ -18,6 +21,7 @@ export default {
 	},
 	props: {
 		modelValue: String,
+		disabled: Boolean,
 	},
 	data(){
 		return {

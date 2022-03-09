@@ -67,7 +67,7 @@ export async function loadUser(){
 
 export async function updateUser(data: User){
 	try {
-		if (!auth.currentUser) return alert('Not Logged in')
+		if (!auth.currentUser) return console.log('Not Logged in')
 		if (!userDoc) return alert('No User Found')
 
 		// console.log('updateUser data', data)
@@ -97,13 +97,16 @@ export async function googleSignIn(){
 				state.user.email = google_user.email
 			}
 
+			userIsLoggedIn = true
 			await updateUser(state.user)
 
 			return google_user
 		} else {
+			userIsLoggedIn = false
 			// Reset Login Form
 		}
 	} catch (e: any) {
+		userIsLoggedIn = false
 		const errorMessage = e.message;
 		const email = e.email;
 		const credential = GoogleAuthProvider.credentialFromError(e);

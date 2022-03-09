@@ -2,10 +2,12 @@ import 'virtual:windi.css'
 import '../node_modules/vue-search-input/dist/styles.css'
 import AutoLinker from "autolinker";
 import * as firebase from './api/firebase'
+import * as near from './api/near'
 
 export default {
 	install: (app:any, state:any) => {
 		firebase.init(app, state)
+		near.init(app, state)
 		app
 			.provide('$firebase', firebase)
 			.provide('$autoLinkText', autoLinkText)
